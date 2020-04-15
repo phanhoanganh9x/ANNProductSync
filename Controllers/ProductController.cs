@@ -48,7 +48,7 @@ namespace ANNProductSync.Controllers
             if (String.IsNullOrEmpty(domain))
                 return BadRequest("Domain WooCommerce không được rỗng");
             if (String.IsNullOrEmpty(user))
-                return BadRequest("Userr WooCommerce không được rỗng");
+                return BadRequest("User WooCommerce không được rỗng");
             if (String.IsNullOrEmpty(pass))
                 return BadRequest("Pass WooCommerce không được rỗng");
 
