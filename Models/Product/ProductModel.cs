@@ -25,5 +25,8 @@ namespace ANNProductSync.Models
         public List<ProductSizeModel> sizes { get; set; }
         public int badge { get; set; }
         public List<ProductTagModel> tags { get; set; }
+        public string type { get; set; }
+        public bool manage_stock { get; set; }
+        public int? stock_quantity { get; set; }
     }
 }

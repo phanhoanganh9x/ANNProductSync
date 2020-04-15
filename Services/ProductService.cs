@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ANNProductSync.Services
 {
-    public class ProductService
+    public class ProductService: IANNService
     {
         protected readonly ProductCategoryService _category = ANNFactoryService.getInstance<ProductCategoryService>();
         protected readonly StockService _stock = ANNFactoryService.getInstance<StockService>();
@@ -384,7 +384,77 @@ namespace ANNProductSync.Services
         /// <returns></returns>
         public List<ProductColorModel> getColors(int productID)
         {
-            return getColors(new List<int>() { productID });
+            using (var con = new SQLServerContext())
+            {
+                var variables = con.tbl_Product.Where(x => x.ID == productID)
+                    .Join(
+                        con.tbl_ProductVariable,
+                        p => p.ID,
+                        v => v.ProductID,
+                        (p, v) => new { productID = p.ID, productVariableID = v.ID }
+                    )
+                    .Join(
+                        con.tbl_ProductVariableValue,
+                        p => p.productVariableID,
+                        v => v.ProductVariableID,
+                        (p, v) => new
+                        {
+                            productID = p.productID,
+                            variableValueID = v.VariableValueID.HasValue ? v.VariableValueID.Value : 0
+                        }
+                    )
+                    .GroupBy(x => new { x.productID, x.variableValueID })
+                    .Select(x => new { productID = x.Key.productID, variableValueID = x.Key.variableValueID })
+                    .Join(
+                        con.tbl_VariableValue.Where(x => x.VariableID == (int)VariableType.Color),
+                        p => p.variableValueID,
+                        v => v.ID,
+                        (p, v) => new ProductColorModel()
+                        {
+                            productID = p.productID,
+                            id = v.ID,
+                            name = v.VariableValue
+                        }
+                    )
+                    .OrderBy(o => o.id)
+                    .ToList();
+
+                return variables;
+            }
+        }
+
+        /// <summary>
+        /// Lấy thông tin biến thể màu
+        /// </summary>
+        /// <param name="productID"></param>
+        /// <param name="productVariationID"></param>
+        /// <returns></returns>
+        public string getColor(int productID, int productVariationID)
+        {
+            using (var con = new SQLServerContext())
+            {
+                var variations = con.tbl_ProductVariable
+                    .Where(x => x.ProductID == productID)
+                    .Where(x => x.ID == productVariationID)
+                    .FirstOrDefault();
+
+                if (variations == null)
+                    return String.Empty;
+
+                var variableValue = con.tbl_ProductVariableValue
+                    .Where(x => x.ProductVariableID == variations.ID)
+                    .FirstOrDefault();
+
+                if (variableValue == null)
+                    return String.Empty;
+
+                var color = con.tbl_VariableValue
+                    .Where(x => x.VariableID == (int)VariableType.Color)
+                    .Where(x => x.ID == variableValue.VariableValueID)
+                    .FirstOrDefault();
+
+                return color == null ? String.Empty : color.VariableValue;
+            }
         }
         #endregion
 
@@ -396,7 +466,77 @@ namespace ANNProductSync.Services
         /// <returns></returns>
         public List<ProductSizeModel> getSizes(int productID)
         {
-            return getSizes(new List<int>() { productID });
+            using (var con = new SQLServerContext())
+            {
+                var variables = con.tbl_Product.Where(x => x.ID == productID)
+                    .Join(
+                        con.tbl_ProductVariable,
+                        p => p.ID,
+                        v => v.ProductID,
+                        (p, v) => new { productID = p.ID, productVariableID = v.ID }
+                    )
+                    .Join(
+                        con.tbl_ProductVariableValue,
+                        p => p.productVariableID,
+                        v => v.ProductVariableID,
+                        (p, v) => new
+                        {
+                            productID = p.productID,
+                            variableValueID = v.VariableValueID.HasValue ? v.VariableValueID.Value : 0
+                        }
+                    )
+                    .GroupBy(x => new { x.productID, x.variableValueID })
+                    .Select(x => new { productID = x.Key.productID, variableValueID = x.Key.variableValueID })
+                    .Join(
+                        con.tbl_VariableValue.Where(x => x.VariableID == (int)VariableType.Size),
+                        p => p.variableValueID,
+                        v => v.ID,
+                        (p, v) => new ProductSizeModel()
+                        {
+                            productID = p.productID,
+                            id = v.ID,
+                            name = v.VariableValue
+                        }
+                    )
+                    .OrderBy(o => o.id)
+                    .ToList();
+
+                return variables;
+            }
+        }
+
+        /// <summary>
+        /// Lấy thông tin biến size
+        /// </summary>
+        /// <param name="productID"></param>
+        /// <param name="productVariationID"></param>
+        /// <returns></returns>
+        public string getSize(int productID, int productVariationID)
+        {
+            using (var con = new SQLServerContext())
+            {
+                var variations = con.tbl_ProductVariable
+                    .Where(x => x.ProductID == productID)
+                    .Where(x => x.ID == productVariationID)
+                    .FirstOrDefault();
+
+                if (variations == null)
+                    return String.Empty;
+
+                var variableValue = con.tbl_ProductVariableValue
+                    .Where(x => x.ProductVariableID == variations.ID)
+                    .FirstOrDefault();
+
+                if (variableValue == null)
+                    return String.Empty;
+
+                var size = con.tbl_VariableValue
+                    .Where(x => x.VariableID == (int)VariableType.Size)
+                    .Where(x => x.ID == variableValue.VariableValueID)
+                    .FirstOrDefault();
+
+                return size == null ? String.Empty : size.VariableValue;
+            }
         }
         #endregion
 
@@ -406,7 +546,7 @@ namespace ANNProductSync.Services
         /// </summary>
         /// <param name="productID"></param>
         /// <returns></returns>
-        public List<string> getImageListByProduct(int productID, Thumbnail.Size size = Thumbnail.Size.Source)
+        public List<string> getImageListByProduct(int productID)
         {
             using (var con = new SQLServerContext())
             {
@@ -429,11 +569,11 @@ namespace ANNProductSync.Services
 
                 if (images.Count == 0)
                 {
-                    return new List<string>() { Thumbnail.getURL(String.Empty, size) };
+                    return new List<string>() { String.Empty };
                 }
                 else
                 {
-                    return images.Select(x => Thumbnail.getURL(x, size)).ToList();
+                    return images.Select(x => x).ToList();
                 }
             }
         }
@@ -498,7 +638,7 @@ namespace ANNProductSync.Services
                         d => d.ID,
                         (s, d) => s
                     )
-                    .OrderBy(x => new { x.ParentID, x.ProductID, x.ProductVariableID })
+                    //.OrderBy(x => new { x.ParentID.Value, x.ProductID, x.ProductVariableID })
                     .ToList();
                 var stocks = _stock.getQuantities(stockFilter);
 
@@ -532,7 +672,8 @@ namespace ANNProductSync.Services
                             retailPrice = p.Retail_Price.HasValue ? p.Retail_Price.Value : 0,
                             content = p.ProductContent,
                             slug = p.Slug,
-                            preOrder = p.PreOrder
+                            preOrder = p.PreOrder,
+                            productStyle = p.ProductStyle.HasValue ? p.ProductStyle.Value : 1
                         }
                     )
                     .OrderBy(x => x.id)
@@ -570,7 +711,10 @@ namespace ANNProductSync.Services
                                 (parent.pro.oldPrice > 0 ? ProductBadge.sale :
                                     (parent.pro.preOrder ? ProductBadge.order :
                                         (child.availability ? ProductBadge.stockIn : ProductBadge.stockOut))),
-                            tags = tags
+                            tags = tags,
+                            type = parent.pro.productStyle == 1 ? "simple" : "variable",
+                            manage_stock = parent.pro.productStyle == 1 ? true : false,
+                            stock_quantity = parent.pro.productStyle == 1 ? (child != null ? child.quantity : 0) : 0
                         }
                     )
                     .OrderBy(o => o.id)
@@ -609,15 +753,14 @@ namespace ANNProductSync.Services
         /// <summary>
         /// Lấy thông tin các sản phẩm con
         /// </summary>
-        /// <param name="parentID"></param>
-        /// <param name="pagination"></param>
+        /// <param name="productSlug"></param>
         /// <returns></returns>
-        public List<ProductRelatedModel> getProductRelatedBySlug(string slug, ref PaginationMetadataModel pagination)
+        public List<ProductVariationModel> getProductVariationByProductSlug(string productSlug)
         {
             using (var con = new SQLServerContext())
             {
                 // Kiểm tra có sản phẩm không
-                var product = con.tbl_Product.Where(x => x.Slug == slug).FirstOrDefault();
+                var product = con.tbl_Product.Where(x => x.Slug == productSlug).FirstOrDefault();
 
                 if (product == null)
                     return null;
@@ -627,126 +770,49 @@ namespace ANNProductSync.Services
                     .Where(x => x.ProductID == product.ID)
                     .OrderBy(o => o.ID);
 
-                // Display TotalCount to Records to Product
-                pagination.totalCount = source.Count();
-
-                // Calculating Totalpage by Dividing (No of Records / Pagesize)
-                pagination.totalPages = (int)Math.Ceiling(pagination.totalCount / (double)pagination.pageSize);
-
-                // if CurrentPage is greater than 1 means it has previousPage
-                pagination.previousPage = pagination.currentPage > 1 ? "Yes" : "No";
-
-                // if TotalPages is greater than CurrentPage means it has nextPage
-                pagination.nextPage = pagination.currentPage < pagination.totalPages ? "Yes" : "No";
-
-                // Returns List of Customer after applying Paging
-                var data = source
-                    .Skip((pagination.currentPage - 1) * pagination.pageSize)
-                    .Take(pagination.pageSize);
-
                 // Get quantity
                 var stockFilter = con.tbl_StockManager
                     .Join(
-                        data,
+                        source,
                         s => new { productID = s.ParentID.Value, productVariableID = s.ProductVariableID.Value },
                         d => new { productID = d.ProductID.Value, productVariableID = d.ID },
                         (s, d) => s
                     )
-                    .OrderBy(x => new { x.ParentID, x.ProductID, x.ProductVariableID })
+                    //.OrderBy(x => new { x.ParentID, x.ProductID, x.ProductVariableID })
                     .ToList();
 
                 var stocks = _stock.getProductVariableQuantities(stockFilter);
 
-                // Get info variable of product
-                var infoVariable = data
-                    .GroupJoin(
-                        con.tbl_ProductVariableValue,
-                        d => d.ID,
-                        v => v.ProductVariableID,
-                        (d, v) => new { d, v }
-                    )
-                    .SelectMany(
-                        x => x.v.DefaultIfEmpty(),
-                        (parent, child) => new
-                        {
-                            id = parent.d.ID,
-                            variableID = child != null ? child.VariableValueID : 0
-                        }
-                    )
-                    .GroupJoin(
-                        con.tbl_VariableValue,
-                        d => d.variableID,
-                        v => v.ID,
-                        (d, v) => new { d, v }
-                    )
-                    .SelectMany(
-                        x => x.v.DefaultIfEmpty(),
-                        (parent, child) => new
-                        {
-                            id = parent.d.id,
-                            variableID = child != null ? child.VariableID : 0,
-                            variableName = child != null ? child.VariableValue : String.Empty
-                        }
-                    )
+                var productVariable = source
                     .Select(x => new
                     {
-                        id = x.id,
-                        color = x.variableID == 1 ? x.variableName : String.Empty,
-                        size = x.variableID == 2 ? x.variableName : String.Empty,
-                    }
-                    )
-                    .GroupBy(x => x.id)
-                    .Select(g => new
-                    {
-                        id = g.Key,
-                        color = g.Max(x => x.color),
-                        size = g.Max(x => x.size)
-                    }
-                    );
-
-                var productVariable = data
-                    .Join(
-                        infoVariable,
-                        d => d.ID,
-                        v => v.id,
-                        (d, v) => new
-                        {
-                            id = d.ID,
-                            sku = d.SKU,
-                            avatar = d.Image,
-                            color = v.color,
-                            size = v.size,
-                        }
-                    )
+                        productID = x.ProductID.Value,
+                        productVariableID = x.ID,
+                        sku = x.SKU,
+                        avatar = x.Image,
+                        regular_price = x.Regular_Price.HasValue ? x.Regular_Price.Value : 0D
+                    })
                     .ToList();
 
                 var result = productVariable
-                    .GroupJoin(
-                        stocks,
-                        pv => pv.sku,
-                        s => s.sku,
-                        (pv, s) => new { productVariable = pv, stock = s }
-                    )
-                    .SelectMany(
-                        x => x.stock.DefaultIfEmpty(),
-                        (parent, child) => new { productVariable = parent.productVariable, stock = child }
-                    )
-                    .Select(x => new ProductRelatedModel()
-                    {
-                        id = x.productVariable.id,
-                        name = getVariableName(x.productVariable.color, x.productVariable.size),
-                        sku = x.productVariable.sku,
-                        avatar = Thumbnail.getURL(x.productVariable.avatar, Thumbnail.Size.Micro),
-                        badge = product.Old_Price.HasValue && product.Old_Price.Value > 0 ? ProductBadge.sale :
-                            (
-                                product.PreOrder ? ProductBadge.order :
-                                (
-                                    x.stock == null ? ProductBadge.stockOut :
-                                        (x.stock.availability ? ProductBadge.stockIn : ProductBadge.stockOut)
-                                )
-                            )
+                    .Select(x => {
+                        var stock = stocks
+                            .Where(s => s.productID == x.productID)
+                            .Where(s => s.productVariableID == x.productVariableID)
+                            .FirstOrDefault();
+                        var color = getColor(x.productID, x.productVariableID);
+                        var size = getSize(x.productID, x.productVariableID);
+
+                        return new ProductVariationModel()
+                        {
+                            sku = x.sku,
+                            regular_price = Convert.ToInt32(x.regular_price),
+                            stock_quantity = stock != null ? stock.quantity : 0,
+                            image = x.avatar,
+                            color = color,
+                            size = size
+                        };
                     })
-                    .OrderBy(x => x.id)
                     .ToList();
 
                 return result;
