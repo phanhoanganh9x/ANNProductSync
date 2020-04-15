@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using WooCommerceNET;
 using WooCommerceNET.WooCommerce.v3;
@@ -28,7 +29,6 @@ namespace ANNProductSync.Controllers
             _logger = logger;
             _service = ANNFactoryService.getInstance<ProductService>();
         }
-
 
         [HttpPost]
         [Route("{slug}")]
@@ -62,14 +62,29 @@ namespace ANNProductSync.Controllers
 
             // Category List
             var categories = new List<ProductCategoryLine>();
-            categories.Add(new ProductCategoryLine() { id = 44 });
+            var wcProductCategory = await _wc.Category.GetAll(new Dictionary<string, string>() {{ "search", product.categoryName} });
+            if (wcProductCategory.Count > 0)
+            {
+                var wcProductCategoryID = wcProductCategory.Select(x => x.id).FirstOrDefault();
+                categories.Add(new ProductCategoryLine() { id = wcProductCategoryID });
+            }
 
             // Image List
             var images = new List<ProductImage>();
             if (!String.IsNullOrEmpty(product.avatar))
-                images.Add(new ProductImage() { src = String.Format("http://hethongann.com/uploads/images/{0}", product.avatar) });
+                images.Add(new ProductImage() { src = String.Format("http://hethongann.com/uploads/images/{0}", product.avatar), alt = product.name, position = 0 });
             if (product.images.Count > 0)
-                images.AddRange(product.images.Select(x => new ProductImage() { src = String.Format("http://hethongann.com/uploads/images/{0}", x) }).ToList());
+            {
+                foreach(var img in product.images)
+                {
+                    if (img != product.avatar)
+                    {
+                        images.Add(new ProductImage() { src = String.Format("http://hethongann.com/uploads/images/{0}", img), alt = product.name });
+                    }
+                }
+            }
+            
+            //images.AddRange(product.images.Select(x => new ProductImage() { src = String.Format("http://hethongann.com/uploads/images/{0}", x) }).ToList());
 
             // Attribute List
             var attributes = new List<ProductAttributeLine>();
@@ -112,7 +127,7 @@ namespace ANNProductSync.Controllers
                 images = images,
                 attributes = attributes,
                 manage_stock = product.manage_stock,
-                stock_quantity = product.stock_quantity,
+                stock_quantity = product.stock_quantity
             });
 
             if (product.type == "variable" && wcProduct != null)
@@ -181,6 +196,8 @@ namespace ANNProductSync.Controllers
                     image.id = Convert.ToInt32(wcImageID);
                 else
                     image.src = String.Format("http://hethongann.com/uploads/images/{0}", productVariation.image);
+
+                image.alt = wcProduct.name;
             }
 
             // Attribute List
