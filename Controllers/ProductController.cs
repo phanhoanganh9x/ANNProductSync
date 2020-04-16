@@ -393,6 +393,39 @@ namespace ANNProductSync.Controllers
             return Ok(wcProductVariation);
         }
         #endregion
+        #region Get
+        /// <summary>
+        /// Thực hiện post product
+        /// </summary>
+        /// <param name="slug"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("{productID}")]
+        public async Task<IActionResult> getProduct(int productID)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+
+            if (!checkHeader.status)
+                return BadRequest(checkHeader.message);
+
+            var wcObject = checkHeader.wc.wcObject;
+            #endregion
+
+            #region Kiểm tra tồn tại sản phẩm trong data gốc
+            var product = _service.getProductByID(productID);
+
+            if (product == null)
+                return BadRequest("Không tìm thấy sản phẩm hệ thống gốc");
+            #endregion
+
+            #region Thực hiện get sản phẩm
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
+            #endregion
+
+            return Ok(wcProduct);
+        }
+        #endregion
         #endregion
     }
 }

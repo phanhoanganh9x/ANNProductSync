@@ -535,6 +535,25 @@ namespace ANNProductSync.Services
         }
         #endregion
 
+        #region Lấy thông tin sản phẩm theo SKU
+        /// <summary>
+        /// Lấy thông tin sản phẩm theo slug
+        /// </summary>
+        /// <param name="slug"></param>
+        /// <returns></returns>
+        public ProductModel getProductByID(int productID)
+        {
+            using (var con = new SQLServerContext())
+            {
+                // Kiểm tra có sản phẩm không
+                var product = con.tbl_Product.Where(x => x.ID == productID).FirstOrDefault();
+                if (product == null)
+                    return null;
+
+                return getProductBySlug(product.Slug);
+            }
+        }
+        #endregion
         #region Lấy thông tin sản phẩm theo slug
         /// <summary>
         /// Lấy thông tin sản phẩm theo slug
