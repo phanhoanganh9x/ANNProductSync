@@ -146,7 +146,10 @@ namespace ANNProductSync.Controllers
 
                 image.alt = wcProduct.name;
             }
-
+            else
+            {
+                image = null;
+            }
             // Attribute List
             var attributes = new List<VariationAttribute>();
             if (!String.IsNullOrEmpty(productVariation.color))
