@@ -226,6 +226,7 @@ namespace ANNProductSync.Controllers
             }    
 
             #endregion
+            
             #region Category List
             var categories = new List<ProductCategoryLine>();
             var wcProductCategory = await wcObject.Category.GetAll(new Dictionary<string, string>() {{ "search", product.categoryName} });
