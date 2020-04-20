@@ -7,6 +7,7 @@ namespace ANNProductSync.Models
 {
     public class CheckHeaderRequestModel
     {
+        public int statusCode { get; set; }
         public bool status { get; set; }
         public string message { get; set; }
         public WooCommerce wc { get; set; }

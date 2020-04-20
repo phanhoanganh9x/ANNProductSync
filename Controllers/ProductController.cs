@@ -3,6 +3,7 @@ using ANNProductSync.Services;
 using ANNProductSync.Services.FactoryPattern;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -29,82 +30,46 @@ namespace ANNProductSync.Controllers
             _service = ANNFactoryService.getInstance<ProductService>();
         }
 
-        #region Private 
+        #region Private
         private CheckHeaderRequestModel _checkHeaderRequest(IHeaderDictionary headers)
         {
             var result = new CheckHeaderRequestModel();
 
             if (!headers.ContainsKey("domain"))
             {
+                result.statusCode = StatusCodes.Status400BadRequest;
                 result.status = false;
                 result.message = "Thiếu domain WooCommerce";
 
                 return result;
-            }    
-            if (!headers.ContainsKey("user"))
-            {
-                result.status = false;
-                result.message = "Thiếu user WooCommerce";
-
-                return result;
-            }    
-            if (!headers.ContainsKey("pass"))
-            {
-                result.status = false;
-                result.message = "Thiếu pass WooCommerce";
-
-                return result;
             }
-            if (!headers.ContainsKey("price_type"))
-            {
-                result.status = false;
-                result.message = "Thiếu loại giá đồng bộ";
 
-                return result;
-            }
+            var configuration = new ConfigurationBuilder()
+                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                 .AddJsonFile("appsettings.json")
+                 .Build();
 
             var domain = headers.Where(x => x.Key == "domain").Select(x => x.Value).FirstOrDefault();
-            var user = headers.Where(x => x.Key == "user").Select(x => x.Value).FirstOrDefault();
-            var pass = headers.Where(x => x.Key == "pass").Select(x => x.Value).FirstOrDefault();
-            var priceType = headers.Where(x => x.Key == "price_type").Select(x => x.Value).FirstOrDefault();
+            var domainSetting = configuration.GetSection(domain).Get<DomainSettingModel>();
 
             if (String.IsNullOrEmpty(domain))
             {
+                result.statusCode = StatusCodes.Status400BadRequest;
                 result.status = false;
                 result.message = "Domain WooCommerce không được rỗng";
 
                 return result;
             }
-            if (String.IsNullOrEmpty(user))
+            if (domainSetting == null)
             {
+                result.statusCode = StatusCodes.Status500InternalServerError;
                 result.status = false;
-                result.message = "User WooCommerce không được rỗng";
-
-                return result;
-            }
-            if (String.IsNullOrEmpty(pass))
-            {
-                result.status = false;
-                result.message = "Pass WooCommerce không được rỗng";
-
-                return result;
-            }
-            if (String.IsNullOrEmpty(priceType))
-            {
-                result.status = false;
-                result.message = "Thể loại giá đồng bộ không được rỗng";
-
-                return result;
-            }
-            else if (priceType != PriceType.WholesalePrice && priceType != PriceType.RetailPrice)
-            {
-                result.status = false;
-                result.message = "Thể loại giá đồng bộ: 'Wholesale Price' | 'Retail Price' ";
+                result.message = String.Format("{0} chưa được cài đặt", domain);
 
                 return result;
             }
 
-            var restAPI = new RestAPI(domain, user, pass);
+            var restAPI = new RestAPI(String.Format("https://{0}/wp-json/wc/v3/", domain), domainSetting.user, domainSetting.pass);
             var wcObject = new WCObject(restAPI);
 
             result.status = true;
@@ -114,7 +79,7 @@ namespace ANNProductSync.Controllers
                 restAPI = restAPI,
                 wcObject = wcObject
             };
-            result.priceType = priceType;
+            result.priceType = domainSetting.priceType;
 
             return result;
         }
@@ -191,23 +156,23 @@ namespace ANNProductSync.Controllers
         /// <summary>
         /// Thực hiện post product
         /// </summary>
-        /// <param name="slug"></param>
+        /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("{slug}")]
-        public async Task<IActionResult> postProduct(string slug)
+        [Route("{productID}")]
+        public async Task<IActionResult> postProduct(int productID)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
 
             if (!checkHeader.status)
-                return BadRequest(checkHeader.message);
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
 
             var wcObject = checkHeader.wc.wcObject;
             #endregion
 
             #region Kiểm tra tồn tại sản phẩm trong data gốc
-            var product = _service.getProductBySlug(slug);
+            var product = _service.getProductByID(productID);
 
             if (product == null)
                 return BadRequest("Không tìm thấy sản phẩm");
@@ -338,7 +303,7 @@ namespace ANNProductSync.Controllers
             #region Thực hiện post các biến thể nếu là sản phẩm biến thể
             if (product.type == ProductType.Variable && wcProduct != null)
             {
-                var productVariationList = _service.getProductVariationByProductSlug(slug);
+                var productVariationList = _service.getProductVariationByProductID(productID);
 
                 foreach (var productVariation in productVariationList)
                 {
@@ -353,26 +318,26 @@ namespace ANNProductSync.Controllers
         /// <summary>
         /// Thực hiện post biến thể của product
         /// </summary>
-        /// <param name="productSlug"></param>
+        /// <param name="productID"></param>
         /// <param name="variationSKU"></param>
         /// <param name="wcProductID"></param>
         /// <returns></returns>
         [HttpPost]
         [Produces("application/json")]
-        [Route("{productSlug}/variation/{variationSKU}")]
-        public async Task<IActionResult> postProductVariation(string productSlug, string variationSKU, [FromBody]PostProductVariationParameter parameters)
+        [Route("{productID}/variation/{variationSKU}")]
+        public async Task<IActionResult> postProductVariation(int productID, string variationSKU, [FromBody]PostProductVariationParameter parameters)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
 
             if (!checkHeader.status)
-                return BadRequest(checkHeader.message);
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
 
             var wcObject = checkHeader.wc.wcObject;
             #endregion
 
             #region Kiểm tra xem biến thể có tồn database gốc không
-            var productVariation = _service.getProductVariationByProductSlug(productSlug, variationSKU);
+            var productVariation = _service.getProductVariationByProductID(productID, variationSKU);
 
             if (productVariation == null)
                 return BadRequest("Không tìm thấy biến thể");
@@ -408,7 +373,7 @@ namespace ANNProductSync.Controllers
             var checkHeader = _checkHeaderRequest(Request.Headers);
 
             if (!checkHeader.status)
-                return BadRequest(checkHeader.message);
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
 
             var wcObject = checkHeader.wc.wcObject;
             #endregion

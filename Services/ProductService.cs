@@ -696,14 +696,14 @@ namespace ANNProductSync.Services
         /// <summary>
         /// Lấy thông tin các sản phẩm con
         /// </summary>
-        /// <param name="productSlug"></param>
+        /// <param name="productID"></param>
         /// <returns></returns>
-        public List<ProductVariationModel> getProductVariationByProductSlug(string productSlug)
+        public List<ProductVariationModel> getProductVariationByProductID(int productID)
         {
             using (var con = new SQLServerContext())
             {
                 // Kiểm tra có sản phẩm không
-                var product = con.tbl_Product.Where(x => x.Slug == productSlug).FirstOrDefault();
+                var product = con.tbl_Product.Where(x => x.ID == productID).FirstOrDefault();
 
                 if (product == null)
                     return null;
@@ -764,12 +764,12 @@ namespace ANNProductSync.Services
             }
         }
 
-        public ProductVariationModel getProductVariationByProductSlug(string productSlug, string variationSKU)
+        public ProductVariationModel getProductVariationByProductID(int productID, string variationSKU)
         {
             using (var con = new SQLServerContext())
             {
                 // Kiểm tra có sản phẩm không
-                var product = con.tbl_Product.Where(x => x.Slug == productSlug).FirstOrDefault();
+                var product = con.tbl_Product.Where(x => x.ID == productID).FirstOrDefault();
 
                 if (product == null)
                     return null;
