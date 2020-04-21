@@ -257,11 +257,18 @@ namespace ANNProductSync.Controllers
             var attributes = new List<ProductAttributeLine>();
             if (product.type == ProductType.Variable)
             {
+                var attr = await wcObject.Attribute.GetAll();
                 if (product.colors.Count > 0)
                 {
+                    int colorID = 1;
+                    if (attr.Count > 0)
+                    {
+                        ProductAttribute color = attr.Where(x => x.name == "Màu").FirstOrDefault();
+                        colorID = color.id.Value;
+                    }
                     attributes.Add(new ProductAttributeLine()
                     {
-                        id = 1,
+                        id = colorID,
                         position = 0,
                         visible = true,
                         variation = true,
@@ -271,9 +278,15 @@ namespace ANNProductSync.Controllers
 
                 if (product.sizes.Count > 0)
                 {
+                    int sizeID = 1;
+                    if (attr.Count > 0)
+                    {
+                        ProductAttribute size = attr.Where(x => x.name == "Size").FirstOrDefault();
+                        sizeID = size.id.Value;
+                    }
                     attributes.Add(new ProductAttributeLine()
                     {
-                        id = 2,
+                        id = sizeID,
                         position = 1,
                         visible = true,
                         variation = true,
@@ -586,11 +599,18 @@ namespace ANNProductSync.Controllers
             var attributes = new List<ProductAttributeLine>();
             if (product.type == ProductType.Variable)
             {
+                var attr = await wcObject.Attribute.GetAll();
                 if (product.colors.Count > 0)
                 {
+                    int colorID = 1;
+                    if (attr.Count > 0)
+                    {
+                        ProductAttribute color = attr.Where(x => x.name == "Màu").FirstOrDefault();
+                        colorID = color.id.Value;
+                    }
                     attributes.Add(new ProductAttributeLine()
                     {
-                        id = 1,
+                        id = colorID,
                         position = 0,
                         visible = true,
                         variation = true,
@@ -600,9 +620,15 @@ namespace ANNProductSync.Controllers
 
                 if (product.sizes.Count > 0)
                 {
+                    int sizeID = 1;
+                    if (attr.Count > 0)
+                    {
+                        ProductAttribute size = attr.Where(x => x.name == "Size").FirstOrDefault();
+                        sizeID = size.id.Value;
+                    }
                     attributes.Add(new ProductAttributeLine()
                     {
-                        id = 2,
+                        id = sizeID,
                         position = 1,
                         visible = true,
                         variation = true,
@@ -634,7 +660,6 @@ namespace ANNProductSync.Controllers
                 #region Update sản phẩm
                 Product wcProduct = await wcObject.Product.Update(wcProductID, new Product()
                 {
-                    name = product.name,
                     sku = product.sku,
                     regular_price = regular_price,
                     type = product.type,
