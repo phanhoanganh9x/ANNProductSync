@@ -5,10 +5,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
+using System.Net;
 using System.Threading.Tasks;
 using WooCommerceNET;
 using WooCommerceNET.WooCommerce.v3;
@@ -38,7 +39,7 @@ namespace ANNProductSync.Controllers
             if (!headers.ContainsKey("domain"))
             {
                 result.statusCode = StatusCodes.Status400BadRequest;
-                result.status = false;
+                result.success = false;
                 result.message = "Thiếu domain WooCommerce";
 
                 return result;
@@ -55,7 +56,7 @@ namespace ANNProductSync.Controllers
             if (String.IsNullOrEmpty(domain))
             {
                 result.statusCode = StatusCodes.Status400BadRequest;
-                result.status = false;
+                result.success = false;
                 result.message = "Domain WooCommerce không được rỗng";
 
                 return result;
@@ -63,7 +64,7 @@ namespace ANNProductSync.Controllers
             if (domainSetting == null)
             {
                 result.statusCode = StatusCodes.Status500InternalServerError;
-                result.status = false;
+                result.success = false;
                 result.message = String.Format("{0} chưa được cài đặt", domain);
 
                 return result;
@@ -72,7 +73,7 @@ namespace ANNProductSync.Controllers
             var restAPI = new RestAPI(String.Format("https://{0}/wp-json/wc/v3/", domain), domainSetting.user, domainSetting.pass);
             var wcObject = new WCObject(restAPI);
 
-            result.status = true;
+            result.success = true;
             result.message = String.Empty;
             result.wc = new Models.WooCommerce()
             {
@@ -152,7 +153,7 @@ namespace ANNProductSync.Controllers
         #endregion
 
         #region Public
-        #region Post
+        #region Post Product
         /// <summary>
         /// Thực hiện post product
         /// </summary>
@@ -165,7 +166,7 @@ namespace ANNProductSync.Controllers
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
 
-            if (!checkHeader.status)
+            if (!checkHeader.success)
                 return StatusCode(checkHeader.statusCode, checkHeader.message);
 
             var wcObject = checkHeader.wc.wcObject;
@@ -175,7 +176,7 @@ namespace ANNProductSync.Controllers
             var product = _service.getProductByID(productID);
 
             if (product == null)
-                return BadRequest("Không tìm thấy sản phẩm");
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm" });
             #endregion
 
             #region Thực hiện post sản phẩm product
@@ -282,37 +283,46 @@ namespace ANNProductSync.Controllers
             }
             #endregion
 
-            //Add new product
-            Product wcProduct = await wcObject.Product.Add(new Product()
+            try
             {
-                name = product.name,
-                sku = product.sku,
-                regular_price = regular_price,
-                type = product.type,
-                description = product.content,
-                short_description = product.materials,
-                categories = categories,
-                tags = tags,
-                images = images,
-                attributes = attributes,
-                manage_stock = product.manage_stock,
-                stock_quantity = product.stock_quantity
-            });
-            #endregion
-
-            #region Thực hiện post các biến thể nếu là sản phẩm biến thể
-            if (product.type == ProductType.Variable && wcProduct != null)
-            {
-                var productVariationList = _service.getProductVariationByProductID(productID);
-
-                foreach (var productVariation in productVariationList)
+                //Add new product
+                Product wcProduct = await wcObject.Product.Add(new Product()
                 {
-                    await _postVariation(productVariation, wcProduct, wcObject, checkHeader.priceType);
+                    name = product.name,
+                    sku = product.sku,
+                    regular_price = regular_price,
+                    type = product.type,
+                    description = product.content,
+                    short_description = product.materials,
+                    categories = categories,
+                    tags = tags,
+                    images = images,
+                    attributes = attributes,
+                    manage_stock = product.manage_stock,
+                    stock_quantity = product.stock_quantity
+                });
+
+                #region Thực hiện post các biến thể nếu là sản phẩm biến thể
+                if (product.type == ProductType.Variable && wcProduct != null)
+                {
+                    var productVariationList = _service.getProductVariationByProductID(productID);
+
+                    foreach (var productVariation in productVariationList)
+                    {
+                        await _postVariation(productVariation, wcProduct, wcObject, checkHeader.priceType);
+                    }
                 }
+                #endregion
+
+                return Ok(wcProduct);
+            }
+            catch (WebException e)
+            {
+                var wcError = JsonConvert.DeserializeObject<WCErrorModel>(e.Message);
+
+                return StatusCode(StatusCodes.Status500InternalServerError, wcError);
             }
             #endregion
-
-            return Ok(wcProduct);
         }
 
         /// <summary>
@@ -330,7 +340,7 @@ namespace ANNProductSync.Controllers
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
 
-            if (!checkHeader.status)
+            if (!checkHeader.success)
                 return StatusCode(checkHeader.statusCode, checkHeader.message);
 
             var wcObject = checkHeader.wc.wcObject;
@@ -340,7 +350,7 @@ namespace ANNProductSync.Controllers
             var productVariation = _service.getProductVariationByProductID(productID, variationSKU);
 
             if (productVariation == null)
-                return BadRequest("Không tìm thấy biến thể");
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy biến thể" });
             #endregion
 
             #region Kiểm tra xem có biến thể cha ở WooCommerce không
@@ -348,7 +358,7 @@ namespace ANNProductSync.Controllers
             var wcProduct = await wcObject.Product.Get(parameters.wcProductID);
 
             if (wcProduct == null)
-                return BadRequest("Không tìm thấy sản cha " + parameters.wcProductID);
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm cha " + parameters.wcProductID });
             #endregion
            
             #region Thức thi post sản phẩm biến thể
@@ -359,7 +369,7 @@ namespace ANNProductSync.Controllers
             return Ok(wcProductVariation);
         }
         #endregion
-        #region Get
+        #region Get product
         /// <summary>
         /// Thực hiện post product
         /// </summary>
@@ -371,25 +381,295 @@ namespace ANNProductSync.Controllers
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
-
-            if (!checkHeader.status)
+            if (!checkHeader.success)
                 return StatusCode(checkHeader.statusCode, checkHeader.message);
-
             var wcObject = checkHeader.wc.wcObject;
             #endregion
 
             #region Kiểm tra tồn tại sản phẩm trong data gốc
             var product = _service.getProductByID(productID);
-
             if (product == null)
-                return BadRequest("Không tìm thấy sản phẩm hệ thống gốc");
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên hệ thống gốc" });
             #endregion
 
-            #region Thực hiện get sản phẩm
+            #region Thực hiện get sản phẩm trên web
             var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
             #endregion
 
             return Ok(wcProduct);
+        }
+        #endregion
+        #region Up to the top
+        /// <summary>
+        /// Thực hiện post product
+        /// </summary>
+        /// <param name="slug"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("{productID}/uptop")]
+        public async Task<IActionResult> upTopProduct(int productID)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+            var wcObject = checkHeader.wc.wcObject;
+            #endregion
+
+            #region Kiểm tra tồn tại sản phẩm trong data gốc
+            var product = _service.getProductByID(productID);
+            if (product == null)
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên hệ thống gốc" });
+            #endregion
+
+            #region Thực hiện get sản phẩm trên web
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
+            if (wcProduct.Count == 0)
+            {
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
+            }
+            #endregion
+
+            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            var updateProduct = await wcObject.Product.Update(wcProductID, new Product { date_created = DateTime.Now, date_modified = DateTime.Now });
+
+            return Ok(updateProduct);
+        }
+        #endregion
+        #region Toggle Product
+        /// <summary>
+        /// Thực hiện post product
+        /// </summary>
+        /// <param name="slug"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("{productID}/{toggleProduct}")]
+        public async Task<IActionResult> toggleProduct(int productID, string toggleProduct)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+            var wcObject = checkHeader.wc.wcObject;
+            #endregion
+
+            #region Kiểm tra tồn tại sản phẩm trong data gốc
+            var product = _service.getProductByID(productID);
+            if (product == null)
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên hệ thống gốc" });
+            #endregion
+
+            #region Thực hiện get sản phẩm trên web
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
+            if (wcProduct.Count == 0)
+            {
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
+            }
+            #endregion
+
+            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            var updateProduct = await wcObject.Product.Update(wcProductID, new Product { catalog_visibility = (toggleProduct == "show" ? "visible" : "search") });
+
+            return Ok(updateProduct);
+        }
+        #endregion
+        #region Renew product
+        /// <summary>
+        /// Thực hiện post product
+        /// </summary>
+        /// <param name="productID"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("{productID}/renew")]
+        public async Task<IActionResult> renewProduct(int productID)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+            var wcObject = checkHeader.wc.wcObject;
+            #endregion
+
+            #region Kiểm tra tồn tại sản phẩm trong data gốc
+            var product = _service.getProductByID(productID);
+            if (product == null)
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm" });
+            #endregion
+
+            #region Thực hiện get sản phẩm trên web
+            var getWCProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
+            if (getWCProduct.Count == 0)
+            {
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
+            }
+            #endregion
+
+            #region Lấy slug sản phẩm trên web
+            string productSlug = getWCProduct.Select(x => x.slug).FirstOrDefault();
+            #endregion
+
+            #region Thực hiện update sản phẩm
+            #region Regular Price
+            decimal? regular_price = null;
+
+            if (product.type == ProductType.Simple)
+            {
+                if (checkHeader.priceType == PriceType.WholesalePrice)
+                    regular_price = Convert.ToDecimal(product.regularPrice);
+                else
+                    regular_price = Convert.ToDecimal(product.retailPrice);
+            }
+
+            #endregion
+
+            #region Category List
+            var categories = new List<ProductCategoryLine>();
+            var wcProductCategory = await wcObject.Category.GetAll(new Dictionary<string, string>() { { "search", product.categoryName } });
+            if (wcProductCategory.Count > 0)
+            {
+                var wcProductCategoryID = wcProductCategory.Select(x => x.id).FirstOrDefault();
+                categories.Add(new ProductCategoryLine() { id = wcProductCategoryID });
+            }
+            #endregion
+
+            #region Tag List
+            var tags = new List<ProductTagLine>();
+            foreach (var tag in product.tags)
+            {
+                var wcTags = await wcObject.Tag.GetAll(new Dictionary<string, string>()
+                {
+                    {"per_page", "100"},
+                    {"search", tag.name}
+                });
+
+                if (wcTags != null && wcTags.Count > 0)
+                {
+                    var wcTag = wcTags.Where(x => x.name == tag.name).FirstOrDefault();
+
+                    if (wcTag != null)
+                    {
+                        tags.Add(new ProductTagLine() { id = wcTag.id });
+                        continue;
+                    }
+
+                }
+
+                var wcTagNew = await _createProductTag(wcObject, tag.name);
+
+                if (wcTagNew != null)
+                    tags.Add(new ProductTagLine() { id = wcTagNew.id });
+            }
+            #endregion
+
+            #region Image List
+            var images = new List<ProductImage>();
+            if (!String.IsNullOrEmpty(product.avatar))
+                images.Add(new ProductImage() { src = String.Format("http://hethongann.com/uploads/images/{0}", product.avatar), alt = product.name, position = 0 });
+
+            if (product.images.Count > 0)
+            {
+                product.images = product.images.Distinct().ToList();
+
+                if (!String.IsNullOrEmpty(product.avatar))
+                {
+                    var avatar = product.images.Where(x => x == product.avatar).FirstOrDefault();
+                    if (!String.IsNullOrEmpty(avatar))
+                        product.images.Remove(avatar);
+                }
+
+                if (product.images.Count > 0)
+                    images.AddRange(product.images.Select(x => new ProductImage() { src = String.Format("http://hethongann.com/uploads/images/{0}", x), alt = product.name }).ToList());
+            }
+            #endregion
+
+            #region Attribute List
+            var attributes = new List<ProductAttributeLine>();
+            if (product.type == ProductType.Variable)
+            {
+                if (product.colors.Count > 0)
+                {
+                    attributes.Add(new ProductAttributeLine()
+                    {
+                        id = 1,
+                        position = 0,
+                        visible = true,
+                        variation = true,
+                        options = product.colors.Select(x => x.name).ToList(),
+                    });
+                }
+
+                if (product.sizes.Count > 0)
+                {
+                    attributes.Add(new ProductAttributeLine()
+                    {
+                        id = 2,
+                        position = 1,
+                        visible = true,
+                        variation = true,
+                        options = product.sizes.Select(x => x.name).ToList(),
+                    });
+                }
+            }
+            #endregion
+
+            try
+            {
+                #region Lấy product ID trên web
+                int wcProductID = getWCProduct.Select(x => x.id).FirstOrDefault().Value;
+                #endregion
+
+                #region Thực hiện xóa các biến thể cũ nếu là sản phẩm biến thể
+                string wcProductType = getWCProduct.Select(x => x.type).FirstOrDefault();
+                if (wcProductType == ProductType.Variable)
+                {
+                    var wcProductVariationList = await wcObject.Product.Variations.GetAll(wcProductID);
+
+                    foreach (var productVariation in wcProductVariationList)
+                    {
+                        await wcObject.Product.Variations.Delete(productVariation.id.Value, wcProductID, true);
+                    }
+                }
+                #endregion
+
+                #region Update sản phẩm
+                Product wcProduct = await wcObject.Product.Update(wcProductID, new Product()
+                {
+                    name = product.name,
+                    sku = product.sku,
+                    regular_price = regular_price,
+                    type = product.type,
+                    description = product.content,
+                    short_description = product.materials,
+                    categories = categories,
+                    tags = tags,
+                    images = images,
+                    attributes = attributes,
+                    manage_stock = product.manage_stock,
+                    stock_quantity = product.stock_quantity
+                });
+                #endregion
+
+                #region Thực hiện post các biến thể nếu là sản phẩm biến thể
+                if (product.type == ProductType.Variable && wcProduct != null)
+                {
+                    var productVariationList = _service.getProductVariationByProductID(productID);
+
+                    foreach (var productVariation in productVariationList)
+                    {
+                        await _postVariation(productVariation, wcProduct, wcObject, checkHeader.priceType);
+                    }
+                }
+                #endregion
+
+                return Ok(wcProduct);
+            }
+            catch (WebException e)
+            {
+                var wcError = JsonConvert.DeserializeObject<WCErrorModel>(e.Message);
+
+                return StatusCode(StatusCodes.Status500InternalServerError, wcError);
+            }
+            #endregion
         }
         #endregion
         #endregion

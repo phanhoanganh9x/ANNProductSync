@@ -5,12 +5,9 @@ using System.Threading.Tasks;
 
 namespace ANNProductSync.Models
 {
-    public class CheckHeaderRequestModel
+    public class ResponseModel
     {
-        public int statusCode { get; set; }
         public bool success { get; set; }
         public string message { get; set; }
-        public WooCommerce wc { get; set; }
-        public string priceType { get; set; }
     }
 }
