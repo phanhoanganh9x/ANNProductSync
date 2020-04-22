@@ -73,6 +73,7 @@ namespace ANNProductSync.Controllers
             var restAPI = new RestAPI(String.Format("https://{0}/wp-json/wc/v3/", domain), domainSetting.user, domainSetting.pass);
             var wcObject = new WCObject(restAPI);
 
+            result.domain = domain;
             result.success = true;
             result.message = String.Empty;
             result.wc = new Models.WooCommerce()
@@ -81,15 +82,24 @@ namespace ANNProductSync.Controllers
                 wcObject = wcObject
             };
             result.priceType = domainSetting.priceType;
-
             return result;
         }
 
-        private async Task<ProductTag> _createProductTag(WCObject wcObject, string tagName)
+        private async Task<ProductTag> _createWCProductTag(WCObject wcObject, string tagName)
         {
             return await wcObject.Tag.Add(new ProductTag() { name = tagName });
         }
 
+        private async Task<ProductAttribute> _getWCAttribute(WCObject wcObject, string name)
+        {
+            var attr = await wcObject.Attribute.GetAll();
+
+            if (attr == null)
+                return null;
+
+            return attr.Where(x => x.name == name).FirstOrDefault();
+
+        }
         /// <summary>
         /// Thực hiện post biến thể
         /// </summary>
@@ -98,7 +108,7 @@ namespace ANNProductSync.Controllers
         /// <param name="wcObject"></param>
         /// <param name="priceType"></param>
         /// <returns></returns>
-        private async Task<Variation> _postVariation(ProductVariationModel productVariation, Product wcProduct, WCObject wcObject, string priceType)
+        private async Task<Variation> _postWCVariation(ProductVariationModel productVariation, Product wcProduct, WCObject wcObject, string priceType)
         {
             var image = new VariationImage();
             if (!String.IsNullOrEmpty(productVariation.image))
@@ -120,18 +130,22 @@ namespace ANNProductSync.Controllers
             var attributes = new List<VariationAttribute>();
             if (!String.IsNullOrEmpty(productVariation.color))
             {
+                var color = await _getWCAttribute(wcObject, "Màu");
+                int colorID = color != null ? color.id.Value : 1;
                 attributes.Add(new VariationAttribute()
                 {
-                    id = 1,
+                    id = colorID,
                     option = productVariation.color,
                 });
             }
 
             if (!String.IsNullOrEmpty(productVariation.size))
             {
+                var size = await _getWCAttribute(wcObject, "Size");
+                int sizeID = size != null ? size.id.Value : 2;
                 attributes.Add(new VariationAttribute()
                 {
-                    id = 2,
+                    id = sizeID,
                     option = productVariation.size,
                 });
             }
@@ -150,52 +164,226 @@ namespace ANNProductSync.Controllers
 
             return wcProductVariation;
         }
-        #endregion
-
-        #region Public
-        #region Post Product
-        /// <summary>
-        /// Thực hiện post product
-        /// </summary>
-        /// <param name="productID"></param>
-        /// <returns></returns>
-        [HttpPost]
-        [Route("{productID}")]
-        public async Task<IActionResult> postProduct(int productID)
+        private string _renameProduct(string domain, int productID, string productName)
         {
-            #region Kiểm tra điều kiện header request
-            var checkHeader = _checkHeaderRequest(Request.Headers);
+            string ID = productID.ToString().Substring(productID.ToString().Length - 1);
+            string addBefore = "";
 
-            if (!checkHeader.success)
-                return StatusCode(checkHeader.statusCode, checkHeader.message);
+            switch (domain)
+            {
+                case "quanaogiaxuong.com":
+                    switch (ID)
+                    {
+                        case "1":
+                            addBefore = "Xưởng sỉ";
+                            break;
+                        case "3":
+                            addBefore = "Kho sỉ";
+                            break;
+                        case "5":
+                            addBefore = "Chuyên sỉ";
+                            break;
+                        case "7":
+                            addBefore = "Kho hàng sỉ";
+                            break;
+                        case "9":
+                            addBefore = "Mua sỉ";
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case "annshop.vn":
+                    switch (ID)
+                    {
+                        case "2":
+                            addBefore = "Giá sỉ";
+                            break;
+                        case "4":
+                            addBefore = "Ở đâu sỉ";
+                            break;
+                        case "6":
+                            addBefore = "Nơi bỏ sỉ";
+                            break;
+                        case "8":
+                            addBefore = "Chuyên sỉ";
+                            break;
+                        case "0":
+                            addBefore = "Nguồn sỉ";
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case "quanaoxuongmay.com":
+                    switch (ID)
+                    {
+                        case "1":
+                            addBefore = "TPHCM nơi sỉ";
+                            break;
+                        case "3":
+                            addBefore = "Top xưởng sỉ";
+                            break;
+                        case "5":
+                            addBefore = "Địa chỉ uy tín sỉ";
+                            break;
+                        case "7":
+                            addBefore = "Chợ sỉ";
+                            break;
+                        case "9":
+                            addBefore = "Nhập sỉ";
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case "panpan.vn":
+                    switch (ID)
+                    {
+                        case "0":
+                            addBefore = "Tìm nơi sỉ";
+                            break;
+                        case "3":
+                            addBefore = "Top 10 kho sỉ";
+                            break;
+                        case "6":
+                            addBefore = "Top 3 địa chỉ sỉ";
+                            break;
+                        case "9":
+                            addBefore = "Những nơi sỉ";
+                            break;
+                        case "8":
+                            addBefore = "Buôn sỉ";
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case "bansithoitrang.net":
+                    switch (ID)
+                    {
+                        case "0":
+                            addBefore = "Bán buôn";
+                            break;
+                        case "2":
+                            addBefore = "Buôn sỉ";
+                            break;
+                        case "4":
+                            addBefore = "Nơi chuyên sỉ";
+                            break;
+                        case "6":
+                            addBefore = "Top 1 xưởng sỉ";
+                            break;
+                        case "8":
+                            addBefore = "Muốn nhập sỉ";
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case "ann.com.vn":
+                    switch (ID)
+                    {
+                        case "1":
+                            addBefore = "Ở đâu sỉ";
+                            break;
+                        case "3":
+                            addBefore = "Kho sỉ";
+                            break;
+                        case "5":
+                            addBefore = "Buôn sỉ";
+                            break;
+                        case "7":
+                            addBefore = "Nhập hàng sỉ";
+                            break;
+                        case "9":
+                            addBefore = "Xưởng sỉ";
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case "khohangsiann.com":
+                    switch (ID)
+                    {
+                        case "0":
+                            addBefore = "Giá sỉ";
+                            break;
+                        case "2":
+                            addBefore = "Kho hàng sỉ";
+                            break;
+                        case "4":
+                            addBefore = "Top 1 xưởng sỉ";
+                            break;
+                        case "6":
+                            addBefore = "Địa chỉ sỉ";
+                            break;
+                        case "8":
+                            addBefore = "Mua sỉ";
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case "bosiquanao.net":
+                    switch (ID)
+                    {
+                        case "0":
+                            addBefore = "Xưởng sỉ";
+                            break;
+                        case "3":
+                            addBefore = "Top 1 kho sỉ";
+                            break;
+                        case "6":
+                            addBefore = "Lấy sỉ";
+                            break;
+                        case "9":
+                            addBefore = "Bỏ sỉ";
+                            break;
+                        case "5":
+                            addBefore = "Sỉ";
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                default:
+                    break;
+            }
 
-            var wcObject = checkHeader.wc.wcObject;
-            #endregion
-
-            #region Kiểm tra tồn tại sản phẩm trong data gốc
-            var product = _service.getProductByID(productID);
-
-            if (product == null)
-                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm" });
-            #endregion
-
-            #region Thực hiện post sản phẩm product
+            if (!string.IsNullOrEmpty(productName) && !string.IsNullOrEmpty(addBefore))
+            {
+                productName = addBefore + " " + char.ToLower(productName[0]) + productName.Substring(1);
+            }
+            
+            return productName;
+        }
+        /// <summary>
+        /// Thực hiện xử lý sản phẩm
+        /// </summary>
+        /// <param name="product"></param>
+        /// <param name="wcObject"></param>
+        /// <param name="priceType"></param>
+        /// <param name="domain"></param>
+        /// <returns></returns>
+        private async Task<Product> _handleWCProduct(ProductModel product, WCObject wcObject, string priceType, string domain)
+        {
             #region Regular Price
             decimal? regular_price = null;
 
             if (product.type == ProductType.Simple)
             {
-                if (checkHeader.priceType == PriceType.WholesalePrice)
+                if (priceType == PriceType.WholesalePrice)
                     regular_price = Convert.ToDecimal(product.regularPrice);
                 else
                     regular_price = Convert.ToDecimal(product.retailPrice);
-            }    
+            }
 
             #endregion
-            
+
             #region Category List
             var categories = new List<ProductCategoryLine>();
-            var wcProductCategory = await wcObject.Category.GetAll(new Dictionary<string, string>() {{ "search", product.categoryName} });
+            var wcProductCategory = await wcObject.Category.GetAll(new Dictionary<string, string>() { { "search", product.categoryName } });
             if (wcProductCategory.Count > 0)
             {
                 var wcProductCategoryID = wcProductCategory.Select(x => x.id).FirstOrDefault();
@@ -207,6 +395,11 @@ namespace ANNProductSync.Controllers
             var tags = new List<ProductTagLine>();
             foreach (var tag in product.tags)
             {
+                if (tag.name == "hot")
+                {
+                    continue;
+                }
+
                 var wcTags = await wcObject.Tag.GetAll(new Dictionary<string, string>()
                 {
                     {"per_page", "100"},
@@ -225,7 +418,7 @@ namespace ANNProductSync.Controllers
 
                 }
 
-                var wcTagNew = await _createProductTag(wcObject, tag.name);
+                var wcTagNew = await _createWCProductTag(wcObject, tag.name);
 
                 if (wcTagNew != null)
                     tags.Add(new ProductTagLine() { id = wcTagNew.id });
@@ -234,8 +427,12 @@ namespace ANNProductSync.Controllers
 
             #region Image List
             var images = new List<ProductImage>();
+            var imageNameList = new List<ProductImage>();
             if (!String.IsNullOrEmpty(product.avatar))
+            {
                 images.Add(new ProductImage() { src = String.Format("http://hethongann.com/uploads/images/{0}", product.avatar), alt = product.name, position = 0 });
+                imageNameList.Add(new ProductImage() { src = product.avatar, alt = product.name, position = 0 });
+            }
 
             if (product.images.Count > 0)
             {
@@ -249,7 +446,11 @@ namespace ANNProductSync.Controllers
                 }
 
                 if (product.images.Count > 0)
+                {
                     images.AddRange(product.images.Select(x => new ProductImage() { src = String.Format("http://hethongann.com/uploads/images/{0}", x), alt = product.name }).ToList());
+                    imageNameList.AddRange(product.images.Select(x => new ProductImage() { src = x, alt = product.name }).ToList());
+                }
+
             }
             #endregion
 
@@ -257,15 +458,11 @@ namespace ANNProductSync.Controllers
             var attributes = new List<ProductAttributeLine>();
             if (product.type == ProductType.Variable)
             {
-                var attr = await wcObject.Attribute.GetAll();
                 if (product.colors.Count > 0)
                 {
-                    int colorID = 1;
-                    if (attr.Count > 0)
-                    {
-                        ProductAttribute color = attr.Where(x => x.name == "Màu").FirstOrDefault();
-                        colorID = color.id.Value;
-                    }
+                    var color = await _getWCAttribute(wcObject, "Màu");
+                    int colorID = color != null ? color.id.Value : 1;
+
                     attributes.Add(new ProductAttributeLine()
                     {
                         id = colorID,
@@ -278,12 +475,9 @@ namespace ANNProductSync.Controllers
 
                 if (product.sizes.Count > 0)
                 {
-                    int sizeID = 1;
-                    if (attr.Count > 0)
-                    {
-                        ProductAttribute size = attr.Where(x => x.name == "Size").FirstOrDefault();
-                        sizeID = size.id.Value;
-                    }
+                    var size = await _getWCAttribute(wcObject, "Size");
+                    int sizeID = size != null ? size.id.Value : 1;
+
                     attributes.Add(new ProductAttributeLine()
                     {
                         id = sizeID,
@@ -296,24 +490,73 @@ namespace ANNProductSync.Controllers
             }
             #endregion
 
+            #region Product Name
+            string productName = _renameProduct(domain, product.id, product.name);
+            #endregion
+
+            #region Content
+            string productContent = "";
+            productContent += "Chất liệu " + product.materials + ".<br><br>";
+            productContent += product.content + "<br>";
+            productContent += "<h3>" + product.name + "</h3>";
+            foreach (var item in imageNameList)
+            {
+                productContent += "<img alt='" + productName + "' src='/wp-content/uploads/" + item.src + "' /><br>";
+            }
+            #endregion
+
+            return new Product()
+            {
+                name = productName,
+                sku = product.sku,
+                regular_price = regular_price,
+                type = product.type,
+                description = productContent,
+                short_description = "Chất liệu " + product.materials,
+                categories = categories,
+                tags = tags,
+                images = images,
+                attributes = attributes,
+                manage_stock = product.manage_stock,
+                stock_quantity = product.stock_quantity
+            };
+
+            }
+        #endregion
+
+        #region Public
+        #region Post Product
+        /// <summary>
+        /// Thực hiện post sản phẩm
+        /// </summary>
+        /// <param name="productID"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("{productID:int}")]
+        public async Task<IActionResult> postProduct(int productID)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+
+            var wcObject = checkHeader.wc.wcObject;
+            #endregion
+
+            #region Kiểm tra tồn tại sản phẩm trong data gốc
+            var product = _service.getProductByID(productID);
+
+            if (product == null)
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm" });
+            #endregion
+
+            #region Thực hiện post sản phẩm
             try
             {
                 //Add new product
-                Product wcProduct = await wcObject.Product.Add(new Product()
-                {
-                    name = product.name,
-                    sku = product.sku,
-                    regular_price = regular_price,
-                    type = product.type,
-                    description = product.content,
-                    short_description = product.materials,
-                    categories = categories,
-                    tags = tags,
-                    images = images,
-                    attributes = attributes,
-                    manage_stock = product.manage_stock,
-                    stock_quantity = product.stock_quantity
-                });
+                Product newProduct = await _handleWCProduct(product, wcObject, checkHeader.priceType, checkHeader.domain);
+                Product wcProduct = await wcObject.Product.Add(newProduct);
 
                 #region Thực hiện post các biến thể nếu là sản phẩm biến thể
                 if (product.type == ProductType.Variable && wcProduct != null)
@@ -322,7 +565,7 @@ namespace ANNProductSync.Controllers
 
                     foreach (var productVariation in productVariationList)
                     {
-                        await _postVariation(productVariation, wcProduct, wcObject, checkHeader.priceType);
+                        await _postWCVariation(productVariation, wcProduct, wcObject, checkHeader.priceType);
                     }
                 }
                 #endregion
@@ -339,7 +582,7 @@ namespace ANNProductSync.Controllers
         }
 
         /// <summary>
-        /// Thực hiện post biến thể của product
+        /// Thực hiện post biến thể
         /// </summary>
         /// <param name="productID"></param>
         /// <param name="variationSKU"></param>
@@ -347,7 +590,7 @@ namespace ANNProductSync.Controllers
         /// <returns></returns>
         [HttpPost]
         [Produces("application/json")]
-        [Route("{productID}/variation/{variationSKU}")]
+        [Route("{productID:int}/variation/{variationSKU}")]
         public async Task<IActionResult> postProductVariation(int productID, string variationSKU, [FromBody]PostProductVariationParameter parameters)
         {
             #region Kiểm tra điều kiện header request
@@ -376,7 +619,7 @@ namespace ANNProductSync.Controllers
            
             #region Thức thi post sản phẩm biến thể
             //Add new product variation
-            Variation wcProductVariation = await _postVariation(productVariation, wcProduct, wcObject, checkHeader.priceType);
+            Variation wcProductVariation = await _postWCVariation(productVariation, wcProduct, wcObject, checkHeader.priceType);
             #endregion
 
             return Ok(wcProductVariation);
@@ -384,12 +627,12 @@ namespace ANNProductSync.Controllers
         #endregion
         #region Get product
         /// <summary>
-        /// Thực hiện post product
+        /// Thực hiện get product
         /// </summary>
-        /// <param name="slug"></param>
+        /// <param name="productID"></param>
         /// <returns></returns>
         [HttpGet]
-        [Route("{productID}")]
+        [Route("{productID:int}")]
         public async Task<IActionResult> getProduct(int productID)
         {
             #region Kiểm tra điều kiện header request
@@ -414,12 +657,12 @@ namespace ANNProductSync.Controllers
         #endregion
         #region Up to the top
         /// <summary>
-        /// Thực hiện post product
+        /// Thực hiện up top product
         /// </summary>
-        /// <param name="slug"></param>
+        /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("{productID}/uptop")]
+        [Route("{productID:int}/uptop")]
         public async Task<IActionResult> upTopProduct(int productID)
         {
             #region Kiểm tra điều kiện header request
@@ -451,12 +694,13 @@ namespace ANNProductSync.Controllers
         #endregion
         #region Toggle Product
         /// <summary>
-        /// Thực hiện post product
+        /// Thực hiện toggle product
         /// </summary>
-        /// <param name="slug"></param>
+        /// <param name="productID"></param>
+        /// <param name="toggleProduct"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("{productID}/{toggleProduct}")]
+        [Route("{productID:int}/{toggleProduct}")]
         public async Task<IActionResult> toggleProduct(int productID, string toggleProduct)
         {
             #region Kiểm tra điều kiện header request
@@ -488,12 +732,12 @@ namespace ANNProductSync.Controllers
         #endregion
         #region Renew product
         /// <summary>
-        /// Thực hiện post product
+        /// Thực hiện renew product
         /// </summary>
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("{productID}/renew")]
+        [Route("{productID:int}/renew")]
         public async Task<IActionResult> renewProduct(int productID)
         {
             #region Kiểm tra điều kiện header request
@@ -517,139 +761,18 @@ namespace ANNProductSync.Controllers
             }
             #endregion
 
-            #region Lấy slug sản phẩm trên web
-            string productSlug = getWCProduct.Select(x => x.slug).FirstOrDefault();
-            #endregion
-
             #region Thực hiện update sản phẩm
-            #region Regular Price
-            decimal? regular_price = null;
-
-            if (product.type == ProductType.Simple)
-            {
-                if (checkHeader.priceType == PriceType.WholesalePrice)
-                    regular_price = Convert.ToDecimal(product.regularPrice);
-                else
-                    regular_price = Convert.ToDecimal(product.retailPrice);
-            }
-
-            #endregion
-
-            #region Category List
-            var categories = new List<ProductCategoryLine>();
-            var wcProductCategory = await wcObject.Category.GetAll(new Dictionary<string, string>() { { "search", product.categoryName } });
-            if (wcProductCategory.Count > 0)
-            {
-                var wcProductCategoryID = wcProductCategory.Select(x => x.id).FirstOrDefault();
-                categories.Add(new ProductCategoryLine() { id = wcProductCategoryID });
-            }
-            #endregion
-
-            #region Tag List
-            var tags = new List<ProductTagLine>();
-            foreach (var tag in product.tags)
-            {
-                var wcTags = await wcObject.Tag.GetAll(new Dictionary<string, string>()
-                {
-                    {"per_page", "100"},
-                    {"search", tag.name}
-                });
-
-                if (wcTags != null && wcTags.Count > 0)
-                {
-                    var wcTag = wcTags.Where(x => x.name == tag.name).FirstOrDefault();
-
-                    if (wcTag != null)
-                    {
-                        tags.Add(new ProductTagLine() { id = wcTag.id });
-                        continue;
-                    }
-
-                }
-
-                var wcTagNew = await _createProductTag(wcObject, tag.name);
-
-                if (wcTagNew != null)
-                    tags.Add(new ProductTagLine() { id = wcTagNew.id });
-            }
-            #endregion
-
-            #region Image List
-            var images = new List<ProductImage>();
-            if (!String.IsNullOrEmpty(product.avatar))
-                images.Add(new ProductImage() { src = String.Format("http://hethongann.com/uploads/images/{0}", product.avatar), alt = product.name, position = 0 });
-
-            if (product.images.Count > 0)
-            {
-                product.images = product.images.Distinct().ToList();
-
-                if (!String.IsNullOrEmpty(product.avatar))
-                {
-                    var avatar = product.images.Where(x => x == product.avatar).FirstOrDefault();
-                    if (!String.IsNullOrEmpty(avatar))
-                        product.images.Remove(avatar);
-                }
-
-                if (product.images.Count > 0)
-                    images.AddRange(product.images.Select(x => new ProductImage() { src = String.Format("http://hethongann.com/uploads/images/{0}", x), alt = product.name }).ToList());
-            }
-            #endregion
-
-            #region Attribute List
-            var attributes = new List<ProductAttributeLine>();
-            if (product.type == ProductType.Variable)
-            {
-                var attr = await wcObject.Attribute.GetAll();
-                if (product.colors.Count > 0)
-                {
-                    int colorID = 1;
-                    if (attr.Count > 0)
-                    {
-                        ProductAttribute color = attr.Where(x => x.name == "Màu").FirstOrDefault();
-                        colorID = color.id.Value;
-                    }
-                    attributes.Add(new ProductAttributeLine()
-                    {
-                        id = colorID,
-                        position = 0,
-                        visible = true,
-                        variation = true,
-                        options = product.colors.Select(x => x.name).ToList(),
-                    });
-                }
-
-                if (product.sizes.Count > 0)
-                {
-                    int sizeID = 1;
-                    if (attr.Count > 0)
-                    {
-                        ProductAttribute size = attr.Where(x => x.name == "Size").FirstOrDefault();
-                        sizeID = size.id.Value;
-                    }
-                    attributes.Add(new ProductAttributeLine()
-                    {
-                        id = sizeID,
-                        position = 1,
-                        visible = true,
-                        variation = true,
-                        options = product.sizes.Select(x => x.name).ToList(),
-                    });
-                }
-            }
-            #endregion
-
             try
             {
                 #region Lấy product ID trên web
                 int wcProductID = getWCProduct.Select(x => x.id).FirstOrDefault().Value;
                 #endregion
 
-                #region Thực hiện xóa các biến thể cũ nếu là sản phẩm biến thể
+                #region Thực hiện xóa tất cả biến thể cũ nếu là sản phẩm biến thể
                 string wcProductType = getWCProduct.Select(x => x.type).FirstOrDefault();
                 if (wcProductType == ProductType.Variable)
                 {
                     var wcProductVariationList = await wcObject.Product.Variations.GetAll(wcProductID);
-
                     foreach (var productVariation in wcProductVariationList)
                     {
                         await wcObject.Product.Variations.Delete(productVariation.id.Value, wcProductID, true);
@@ -658,30 +781,17 @@ namespace ANNProductSync.Controllers
                 #endregion
 
                 #region Update sản phẩm
-                Product wcProduct = await wcObject.Product.Update(wcProductID, new Product()
-                {
-                    sku = product.sku,
-                    regular_price = regular_price,
-                    type = product.type,
-                    description = product.content,
-                    short_description = product.materials,
-                    categories = categories,
-                    tags = tags,
-                    images = images,
-                    attributes = attributes,
-                    manage_stock = product.manage_stock,
-                    stock_quantity = product.stock_quantity
-                });
+                Product updateProduct = await _handleWCProduct(product, wcObject, checkHeader.priceType, checkHeader.domain);
+                Product wcProduct = await wcObject.Product.Update(wcProductID, updateProduct);
                 #endregion
 
                 #region Thực hiện post các biến thể nếu là sản phẩm biến thể
                 if (product.type == ProductType.Variable && wcProduct != null)
                 {
                     var productVariationList = _service.getProductVariationByProductID(productID);
-
                     foreach (var productVariation in productVariationList)
                     {
-                        await _postVariation(productVariation, wcProduct, wcObject, checkHeader.priceType);
+                        await _postWCVariation(productVariation, wcProduct, wcObject, checkHeader.priceType);
                     }
                 }
                 #endregion
@@ -695,6 +805,43 @@ namespace ANNProductSync.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, wcError);
             }
             #endregion
+        }
+        #endregion
+        #region Delete Product
+        /// <summary>
+        /// Thực hiện delete product
+        /// </summary>
+        /// <param name="productID"></param>
+        /// <returns></returns>
+        [HttpDelete]
+        [Route("{productID:int}")]
+        public async Task<IActionResult> deleteProduct(int productID)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+            var wcObject = checkHeader.wc.wcObject;
+            #endregion
+
+            #region Kiểm tra tồn tại sản phẩm trong data gốc
+            var product = _service.getProductByID(productID);
+            if (product == null)
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên hệ thống gốc" });
+            #endregion
+
+            #region Thực hiện get sản phẩm trên web
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
+            if (wcProduct.Count == 0)
+            {
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
+            }
+            #endregion
+
+            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            var updateProduct = await wcObject.Product.Delete(wcProductID, true);
+
+            return Ok(updateProduct);
         }
         #endregion
         #endregion
