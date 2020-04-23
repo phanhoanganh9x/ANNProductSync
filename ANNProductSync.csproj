@@ -13,7 +13,6 @@
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.7.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
     <PackageReference Include="WooCommerceNET" Version="0.8.1" />
-    <PackageReference Include="WordPressPCL" Version="1.6.2" />
   </ItemGroup>
 
 

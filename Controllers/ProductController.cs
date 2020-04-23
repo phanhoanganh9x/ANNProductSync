@@ -687,7 +687,8 @@ namespace ANNProductSync.Controllers
             #endregion
 
             int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            var updateProduct = await wcObject.Product.Update(wcProductID, new Product { date_created = DateTime.Now, date_modified = DateTime.Now });
+            DateTime newTime = DateTime.Now.AddHours(-8);
+            var updateProduct = await wcObject.Product.Update(wcProductID, new Product { date_created_gmt = newTime, date_modified_gmt = newTime });
 
             return Ok(updateProduct);
         }

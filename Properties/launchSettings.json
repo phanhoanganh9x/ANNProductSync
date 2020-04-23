@@ -3,7 +3,7 @@
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iis": {
-      "applicationUrl": "http://ann-product-sync.com",
+      "applicationUrl": "http://annsync.com",
       "sslPort": 0
     },
     "iisExpress": {

@@ -12,6 +12,7 @@ namespace ANNProductSync.Models
         public bool success { get; set; }
         public string message { get; set; }
         public WooCommerce wc { get; set; }
+        public Wordpress wp { get; set; }
         public string priceType { get; set; }
     }
 }
