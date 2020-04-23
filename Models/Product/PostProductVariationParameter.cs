@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ANNProductSync.Models
+namespace ANNwpsync.Models
 {
     public class PostProductVariationParameter
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ANNProductSync.Services.FactoryPattern
+namespace ANNwpsync.Services.FactoryPattern
 {
     public interface IANNService { }
 }

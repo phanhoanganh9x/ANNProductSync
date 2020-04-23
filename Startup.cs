@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging;
 // https://docs.microsoft.com/en-us/aspnet/core/tutorials/getting-started-with-swashbuckle?view=aspnetcore-3.1&tabs=visual-studio-code
 using Microsoft.OpenApi.Models;
 
-namespace ANNProductSync
+namespace ANNwpsync
 {
     public class Startup
     {

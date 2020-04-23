@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using WooCommerceNET;
 using WooCommerceNET.WooCommerce.v3;
 
-namespace ANNProductSync.Models
+namespace ANNwpsync.Models
 {
     public class WooCommerce
     {

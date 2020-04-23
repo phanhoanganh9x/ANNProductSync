@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ANNProductSync.Models.SQLServer
+namespace ANNwpsync.Models.SQLServer
 {
     public class PostPublicImage
     {

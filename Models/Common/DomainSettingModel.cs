@@ -4,12 +4,16 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ANNProductSync.Models
+namespace ANNwpsync.Models
 {
     public class DomainSettingModel
     {
-        public string user { get; set; }
-        public string pass { get; set; }
-        public string priceType { get; set; }
+        public string woocommerce_key { get; set; }
+        public string woocommerce_secret { get; set; }
+        public string woocommerce_price_type { get; set; }
+        public string wordpress_key { get; set; }
+        public string wordpress_secret { get; set; }
+        public string wordpress_oauth_token { get; set; }
+        public string wordpress_oauth_token_secret { get; set; }
     }
 }

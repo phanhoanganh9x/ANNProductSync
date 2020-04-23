@@ -1,10 +1,10 @@
-﻿using ANNProductSync.Models;
+﻿using ANNwpsync.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ANNProductSync.Utils
+namespace ANNwpsync.Utils
 {
     public class Thumbnail
     {

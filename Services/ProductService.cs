@@ -1,14 +1,14 @@
-﻿using ANNProductSync.Models;
-using ANNProductSync.Models.Common;
-using ANNProductSync.Models.SQLServer;
-using ANNProductSync.Services.FactoryPattern;
-using ANNProductSync.Utils;
+﻿using ANNwpsync.Models;
+using ANNwpsync.Models.Common;
+using ANNwpsync.Models.SQLServer;
+using ANNwpsync.Services.FactoryPattern;
+using ANNwpsync.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ANNProductSync.Services
+namespace ANNwpsync.Services
 {
     public class ProductService: IANNService
     {

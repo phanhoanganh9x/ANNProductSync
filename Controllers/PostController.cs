@@ -1,6 +1,6 @@
-﻿using ANNProductSync.Models;
-using ANNProductSync.Services;
-using ANNProductSync.Services.FactoryPattern;
+﻿using ANNwpsync.Models;
+using ANNwpsync.Services;
+using ANNwpsync.Services.FactoryPattern;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -15,10 +15,10 @@ using WooCommerce.NET.WordPress.v2;
 using WooCommerceNET;
 using WooCommerceNET.WooCommerce.v3;
 
-namespace ANNProductSync.Controllers
+namespace ANNwpsync.Controllers
 {
     [ApiController]
-    [Route("api/v1/post")]
+    [Route("api/v1/wordpress")]
     public class PostController : ControllerBase
     {
         #region Parameters
@@ -35,53 +35,52 @@ namespace ANNProductSync.Controllers
         {
             var result = new CheckHeaderRequestModel();
 
-            //if (!headers.ContainsKey("domain"))
-            //{
-            //    result.statusCode = StatusCodes.Status400BadRequest;
-            //    result.success = false;
-            //    result.message = "Thiếu domain WooCommerce";
+            if (!headers.ContainsKey("domain"))
+            {
+                result.statusCode = StatusCodes.Status400BadRequest;
+                result.success = false;
+                result.message = "Thiếu domain";
 
-            //    return result;
-            //}
+                return result;
+            }
 
-            //var configuration = new ConfigurationBuilder()
-            //     .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-            //     .AddJsonFile("appsettings.json")
-            //     .Build();
+            var configuration = new ConfigurationBuilder()
+                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                 .AddJsonFile("appsettings.json")
+                 .Build();
 
-            //var domain = headers.Where(x => x.Key == "domain").Select(x => x.Value).FirstOrDefault();
-            //var domainSetting = configuration.GetSection(domain).Get<DomainSettingModel>();
+            var domain = headers.Where(x => x.Key == "domain").Select(x => x.Value).FirstOrDefault();
+            var domainSetting = configuration.GetSection(domain).Get<DomainSettingModel>();
 
-            //if (String.IsNullOrEmpty(domain))
-            //{
-            //    result.statusCode = StatusCodes.Status400BadRequest;
-            //    result.success = false;
-            //    result.message = "Domain WooCommerce không được rỗng";
+            if (String.IsNullOrEmpty(domain))
+            {
+                result.statusCode = StatusCodes.Status400BadRequest;
+                result.success = false;
+                result.message = "Domain không được rỗng";
 
-            //    return result;
-            //}
-            //if (domainSetting == null)
-            //{
-            //    result.statusCode = StatusCodes.Status500InternalServerError;
-            //    result.success = false;
-            //    result.message = String.Format("{0} chưa được cài đặt", domain);
+                return result;
+            }
+            if (domainSetting == null)
+            {
+                result.statusCode = StatusCodes.Status500InternalServerError;
+                result.success = false;
+                result.message = String.Format("{0} chưa được cài đặt", domain);
 
-            //    return result;
-            //}
+                return result;
+            }
 
-            RestAPI rest = new RestAPI("https://annshop.vn/wp-json/wp/v2/", "wcjxmCc1VXAJ", "WNddYdw1oLqVpuNy5MsrQ8TpYWzM7PCAEXr9k7f2MKltMiqh");
-            rest.oauth_token = "bZqkUIRptTUDKDUfSDtAkONr";
-            rest.oauth_token_secret = "4xgJ80NmiRCO2T2pbYfqnHOPjLQeQYohLVdgzbT7VI9WJf2u";
+            RestAPI restAPI = new RestAPI(String.Format("https://{0}/wp-json/wp/v2/", domain), domainSetting.wordpress_key, domainSetting.wordpress_secret);
+            restAPI.oauth_token = domainSetting.wordpress_oauth_token;
+            restAPI.oauth_token_secret = domainSetting.wordpress_oauth_token_secret;
 
-            //var restAPI = new RestAPI(String.Format("https://{0}/wp-json/jwt-auth/v1/token", domain), "orj0le", "@HoangAnhPhan828327");
-            WPObject wpObject = new WPObject(rest);
+            WPObject wpObject = new WPObject(restAPI);
 
-            result.domain = "annshop.vn";
+            result.domain = domain;
             result.success = true;
             result.message = String.Empty;
             result.wp = new Models.Wordpress()
             {
-                restAPI = rest,
+                restAPI = restAPI,
                 wpObject = wpObject
             };
             return result;
@@ -89,6 +88,7 @@ namespace ANNProductSync.Controllers
         #endregion
 
         [HttpGet]
+        [Route("post")]
         public async Task<IActionResult> getAll()
         {
             #region Kiểm tra điều kiện header request
@@ -101,6 +101,24 @@ namespace ANNProductSync.Controllers
             #endregion
 
             var posts = await wpObject.Post.GetAll();
+
+            return Ok(posts);
+        }
+
+        [HttpGet]
+        [Route("post/{postID:int}")]
+        public async Task<IActionResult> getPost(int postID)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+
+            var wpObject = checkHeader.wp.wpObject;
+            #endregion
+
+            var posts = await wpObject.Post.Get(postID);
 
             return Ok(posts);
         }

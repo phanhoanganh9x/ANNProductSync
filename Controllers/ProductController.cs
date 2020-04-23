@@ -1,6 +1,6 @@
-﻿using ANNProductSync.Models;
-using ANNProductSync.Services;
-using ANNProductSync.Services.FactoryPattern;
+﻿using ANNwpsync.Models;
+using ANNwpsync.Services;
+using ANNwpsync.Services.FactoryPattern;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -14,10 +14,10 @@ using System.Threading.Tasks;
 using WooCommerceNET;
 using WooCommerceNET.WooCommerce.v3;
 
-namespace ANNProductSync.Controllers
+namespace ANNwpsync.Controllers
 {
     [ApiController]
-    [Route("api/v1/product")]
+    [Route("api/v1/woocommerce")]
     public class ProductController : ControllerBase
     {
         #region Parameters
@@ -40,7 +40,7 @@ namespace ANNProductSync.Controllers
             {
                 result.statusCode = StatusCodes.Status400BadRequest;
                 result.success = false;
-                result.message = "Thiếu domain WooCommerce";
+                result.message = "Thiếu domain";
 
                 return result;
             }
@@ -57,7 +57,7 @@ namespace ANNProductSync.Controllers
             {
                 result.statusCode = StatusCodes.Status400BadRequest;
                 result.success = false;
-                result.message = "Domain WooCommerce không được rỗng";
+                result.message = "Domain không được rỗng";
 
                 return result;
             }
@@ -70,7 +70,7 @@ namespace ANNProductSync.Controllers
                 return result;
             }
 
-            var restAPI = new RestAPI(String.Format("https://{0}/wp-json/wc/v3/", domain), domainSetting.user, domainSetting.pass);
+            var restAPI = new RestAPI(String.Format("https://{0}/wp-json/wc/v3/", domain), domainSetting.woocommerce_key, domainSetting.woocommerce_secret);
             var wcObject = new WCObject(restAPI);
 
             result.domain = domain;
@@ -81,7 +81,7 @@ namespace ANNProductSync.Controllers
                 restAPI = restAPI,
                 wcObject = wcObject
             };
-            result.priceType = domainSetting.priceType;
+            result.priceType = domainSetting.woocommerce_price_type;
             return result;
         }
 
@@ -532,7 +532,7 @@ namespace ANNProductSync.Controllers
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("{productID:int}")]
+        [Route("product/{productID:int}")]
         public async Task<IActionResult> postProduct(int productID)
         {
             #region Kiểm tra điều kiện header request
@@ -590,7 +590,7 @@ namespace ANNProductSync.Controllers
         /// <returns></returns>
         [HttpPost]
         [Produces("application/json")]
-        [Route("{productID:int}/variation/{variationSKU}")]
+        [Route("product/{productID:int}/variation/{variationSKU}")]
         public async Task<IActionResult> postProductVariation(int productID, string variationSKU, [FromBody]PostProductVariationParameter parameters)
         {
             #region Kiểm tra điều kiện header request
@@ -632,7 +632,7 @@ namespace ANNProductSync.Controllers
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpGet]
-        [Route("{productID:int}")]
+        [Route("product/{productID:int}")]
         public async Task<IActionResult> getProduct(int productID)
         {
             #region Kiểm tra điều kiện header request
@@ -662,7 +662,7 @@ namespace ANNProductSync.Controllers
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("{productID:int}/uptop")]
+        [Route("product/{productID:int}/uptop")]
         public async Task<IActionResult> upTopProduct(int productID)
         {
             #region Kiểm tra điều kiện header request
@@ -701,7 +701,7 @@ namespace ANNProductSync.Controllers
         /// <param name="toggleProduct"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("{productID:int}/{toggleProduct}")]
+        [Route("product/{productID:int}/{toggleProduct}")]
         public async Task<IActionResult> toggleProduct(int productID, string toggleProduct)
         {
             #region Kiểm tra điều kiện header request
@@ -738,7 +738,7 @@ namespace ANNProductSync.Controllers
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("{productID:int}/renew")]
+        [Route("product/{productID:int}/renew")]
         public async Task<IActionResult> renewProduct(int productID)
         {
             #region Kiểm tra điều kiện header request
@@ -815,7 +815,7 @@ namespace ANNProductSync.Controllers
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpDelete]
-        [Route("{productID:int}")]
+        [Route("product/{productID:int}")]
         public async Task<IActionResult> deleteProduct(int productID)
         {
             #region Kiểm tra điều kiện header request

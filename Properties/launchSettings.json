@@ -20,7 +20,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "ANNProductSync": {
+    "ANNwpsync": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {

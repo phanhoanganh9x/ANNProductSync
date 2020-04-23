@@ -6,7 +6,7 @@ using WooCommerce.NET.WordPress.v2;
 using WooCommerceNET;
 using WooCommerceNET.WooCommerce.v3;
 
-namespace ANNProductSync.Models
+namespace ANNwpsync.Models
 {
     public class Wordpress
     {

@@ -1,12 +1,12 @@
-﻿using ANNProductSync.Models;
-using ANNProductSync.Models.SQLServer;
-using ANNProductSync.Services.FactoryPattern;
+﻿using ANNwpsync.Models;
+using ANNwpsync.Models.SQLServer;
+using ANNwpsync.Services.FactoryPattern;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ANNProductSync.Services
+namespace ANNwpsync.Services
 {
     public class StockService: IANNService
     {
