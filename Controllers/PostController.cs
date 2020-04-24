@@ -23,11 +23,13 @@ namespace ANNwpsync.Controllers
     {
         #region Parameters
         private readonly ILogger<PostController> _logger;
+        private readonly PostService _service;
         #endregion
 
         public PostController(ILogger<PostController> logger)
         {
             _logger = logger;
+            _service = ANNFactoryService.getInstance<PostService>();
         }
 
         #region Private
@@ -106,8 +108,8 @@ namespace ANNwpsync.Controllers
         }
 
         [HttpGet]
-        [Route("post/{postID:int}")]
-        public async Task<IActionResult> getPost(int postID)
+        [Route("post/{postPublicID:int}")]
+        public async Task<IActionResult> getPost(int postPublicID)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
@@ -117,10 +119,15 @@ namespace ANNwpsync.Controllers
 
             var wpObject = checkHeader.wp.wpObject;
             #endregion
+            var post = _service.getPostWordpressByPostPublicID(postPublicID, checkHeader.domain);
 
-            var posts = await wpObject.Post.Get(postID);
+            if (post == null)
+            {
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy bài viết trên hệ thống gốc" });
+            }
+            var wpPost = await wpObject.Post.Get(post.PostWordpressID);
 
-            return Ok(posts);
+            return Ok(wpPost);
         }
     }
 }

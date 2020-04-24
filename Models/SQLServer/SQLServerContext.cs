@@ -29,6 +29,10 @@ namespace ANNwpsync.Models.SQLServer
         public DbSet<tbl_StockManager> tbl_StockManager { get; set; }
         public DbSet<Tag> Tag { get; set; }
         public DbSet<ProductTag> ProductTag { get; set; }
+        public DbSet<PostCategory> PostPublicCategory { get; set; }
+        public DbSet<PostPublic> PostPublic { get; set; }
+        public DbSet<PostWordpress> PostWordpress { get; set; }
+        public DbSet<WebWordpress> WebWordpress { get; set; }
 
     }
 }

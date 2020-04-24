@@ -535,7 +535,7 @@ namespace ANNwpsync.Services
         }
         #endregion
 
-        #region Lấy thông tin sản phẩm theo SKU
+        #region Lấy thông tin sản phẩm theo ID
         /// <summary>
         /// Lấy thông tin sản phẩm theo slug
         /// </summary>
