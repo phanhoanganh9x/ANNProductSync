@@ -5,17 +5,19 @@ using System.Threading.Tasks;
 
 namespace ANNwpsync.Models.SQLServer
 {
-    public class PostWordpress
+    public class PostClone
     {
         public int ID { get; set; }
 
         public int PostPublicID { get; set; }
 
-        public string WebWordpress { get; set; }
+        public string Web { get; set; }
 
-        public int PostWordpressID { get; set; }
+        public int PostWebID { get; set; }
 
         public Nullable<int> CategoryID { get; set; }
+
+        public string CategoryName { get; set; }
 
         public string Title { get; set; }
 

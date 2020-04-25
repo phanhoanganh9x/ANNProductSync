@@ -63,51 +63,21 @@ namespace ANNwpsync.Services
             }
         }
         #endregion
-        #region Lấy thông tin bài viết wordpress theo ID
+        #region Lấy thông tin bài viết clone theo ID
         /// <summary>
         /// Lấy thông tin bài viết app theo ID
         /// </summary>
         /// <param name="postPublicID"></param>
         /// <returns></returns>
-        public PostWordpress getPostWordpressByPostPublicID(int postPublicID, string webWordpress)
+        public PostClone getCloneByID(int postCloneID)
         {
             using (var con = new SQLServerContext())
             {
                 // Kiểm tra có bài viết không
-                var data = con.PostWordpress.Where(x => x.PostPublicID == postPublicID && x.WebWordpress == webWordpress);
+                var data = con.PostClone.Where(x => x.ID == postCloneID);
 
                 if (data.FirstOrDefault() == null)
                     return null;
-
-                //// Lấy ID bài viết
-                //var id = data.FirstOrDefault().ID;
-
-                //// Xuất thông tin cơ bản của sản phẩm
-                //var posts = data.Where(x => x.CategoryID != 0)
-                //    .Join(
-                //        con.PostPublicCategory,
-                //        post => post.CategoryID,
-                //        cat => cat.ID,
-                //        (p, c) => new PostWordpressModel
-                //        {
-                //            id = p.ID,
-                //            postPublicID = p.PostPublicID,
-                //            webWordpress = p.WebWordpress,
-                //            postWordpressID = p.PostWordpressID,
-                //            categoryID = p.CategoryID,
-                //            categoryName = c.Name,
-                //            title = p.Title,
-                //            content = p.Content,
-                //            thumbnail = p.Thumbnail,
-                //            summary = p.Summary,
-                //            createdDate = p.CreatedDate,
-                //            modifiedDate = p.ModifiedDate
-                //        }
-                //    )
-                //    .OrderBy(x => x.id)
-                //    .ToList();
-
-
 
                 return data.FirstOrDefault();
             }

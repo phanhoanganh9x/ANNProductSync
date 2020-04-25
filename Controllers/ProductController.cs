@@ -402,7 +402,7 @@ namespace ANNwpsync.Controllers
 
                 var wcTags = await wcObject.Tag.GetAll(new Dictionary<string, string>()
                 {
-                    {"per_page", "100"},
+                    {"per_page", "50"},
                     {"search", tag.name}
                 });
 

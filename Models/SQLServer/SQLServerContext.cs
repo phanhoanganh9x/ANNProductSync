@@ -31,7 +31,7 @@ namespace ANNwpsync.Models.SQLServer
         public DbSet<ProductTag> ProductTag { get; set; }
         public DbSet<PostCategory> PostPublicCategory { get; set; }
         public DbSet<PostPublic> PostPublic { get; set; }
-        public DbSet<PostWordpress> PostWordpress { get; set; }
+        public DbSet<PostClone> PostClone { get; set; }
         public DbSet<WebWordpress> WebWordpress { get; set; }
 
     }
