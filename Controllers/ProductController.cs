@@ -70,7 +70,7 @@ namespace ANNwpsync.Controllers
                 return result;
             }
 
-            var restAPI = new RestAPI(String.Format("https://{0}/wp-json/wc/v3/", domain), domainSetting.woocommerce_key, domainSetting.woocommerce_secret);
+            var restAPI = new RestAPI(String.Format("https://{0}/wp-json/wc/v3/", domain), domainSetting.woocommerce_key, domainSetting.woocommerce_secret, false);
             var wcObject = new WCObject(restAPI);
 
             result.domain = domain;

@@ -19,6 +19,26 @@ using WooCommerceNET.WooCommerce.v3;
 
 namespace ANNwpsync.Controllers
 {
+    public class MyRestAPI : RestAPI
+    {
+        public MyRestAPI(string url, string key, string secret, bool authorizedHeader = true,
+            Func<string, string> jsonSerializeFilter = null,
+            Func<string, string> jsonDeserializeFilter = null,
+            Action<HttpWebRequest> requestFilter = null) : base(url, key, secret, authorizedHeader, jsonSerializeFilter, jsonDeserializeFilter, requestFilter)
+        {
+        }
+
+        public override T DeserializeJSon<T>(string jsonString)
+        {
+            return JsonConvert.DeserializeObject<T>(jsonString);
+        }
+
+        public override string SerializeJSon<T>(T t)
+        {
+            return JsonConvert.SerializeObject(t);
+        }
+    }
+
     [ApiController]
     [Route("api/v1/wordpress")]
     public class PostController : ControllerBase
@@ -73,9 +93,11 @@ namespace ANNwpsync.Controllers
                 return result;
             }
 
-            RestAPI restAPI = new RestAPI(String.Format("https://{0}/wp-json/wp/v2/", domain), domainSetting.wordpress_key, domainSetting.wordpress_secret);
-            restAPI.oauth_token = domainSetting.wordpress_oauth_token;
-            restAPI.oauth_token_secret = domainSetting.wordpress_oauth_token_secret;
+            MyRestAPI restAPI = new MyRestAPI("https://{0}/wp-json/jwt-auth/v1/token", "orj0lez", "@HoangAnhPhan828327");
+
+            //MyRestAPI restAPI = new MyRestAPI(String.Format("https://{0}/wp-json/wp/v2/", domain), domainSetting.wordpress_key, domainSetting.wordpress_secret, false);
+            //restAPI.oauth_token = domainSetting.wordpress_oauth_token;
+            //restAPI.oauth_token_secret = domainSetting.wordpress_oauth_token_secret;
 
             WPObject wpObject = new WPObject(restAPI);
 
@@ -101,9 +123,9 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            var test = await wpObject.Media.GetAll();
+            //var test = await wpObject.Media.GetAll();
             #region Thumbnail
-            var wpPostThumbnail = await wpObject.Media.Add("post-323-90524679-102448881403878-224407102003609600-o.jpg", @"http://hethongann.com/uploads/images/posts/post-323-90524679-102448881403878-224407102003609600-o.jpg");
+            var wpPostThumbnail = await wpObject.Media.Add("post-323-90524679-102448881403878-224407102003609600-o.jpg", @"C:\category-50.jpg");
             #endregion
 
             return new Posts()
