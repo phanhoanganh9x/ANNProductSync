@@ -83,6 +83,49 @@ namespace ANNwpsync.Services
                 return data.FirstOrDefault();
             }
         }
+
+        public PostClone Update(PostClone data)
+        {
+            using (var con = new SQLServerContext())
+            {
+                var post = con.PostClone.Where(o => o.ID == data.ID).FirstOrDefault();
+                if (post != null)
+                {
+                    post.PostPublicID = data.PostPublicID;
+                    post.Web = data.Web;
+                    post.PostWebID = data.PostWebID;
+                    post.CategoryID = data.CategoryID;
+                    post.CategoryName = data.CategoryName;
+                    post.Title = data.Title;
+                    post.Summary = data.Summary;
+                    post.Content = data.Content;
+                    post.Thumbnail = data.Thumbnail;
+                    post.CreatedBy = data.CreatedBy;
+                    post.CreatedDate = data.CreatedDate;
+                    post.ModifiedBy = data.ModifiedBy;
+                    post.ModifiedDate = data.ModifiedDate;
+
+                    con.SaveChanges();
+
+                    return post;
+                }
+                return null;
+            }
+        }
+
+        public List<PostPublicImage> getPostImageByPostID(int postPublicID)
+        {
+            using (var con = new SQLServerContext())
+            {
+                // Kiểm tra có bài viết không
+                var data = con.PostPublicImage.Where(x => x.PostID == postPublicID).OrderByDescending(x => x.ID).ToList();
+
+                if (data == null)
+                    return null;
+
+                return data;
+            }
+        }
         #endregion
         #endregion
     }

@@ -132,8 +132,12 @@ namespace ANNwpsync.Controllers
             if (!String.IsNullOrEmpty(postClone.Thumbnail))
             {
                 string thumbnailFileName = Path.GetFileName(postClone.Thumbnail);
-                wpPostThumbnail = await wpObject.Media.Add(thumbnailFileName, rootFolder + @"\uploads\images\posts\" + thumbnailFileName);
-                featured_media = wpPostThumbnail.id;
+                string filePath = rootFolder + @"\uploads\images\posts\" + thumbnailFileName;
+                if (System.IO.File.Exists(filePath))
+                {
+                    wpPostThumbnail = await wpObject.Media.Add(thumbnailFileName, filePath);
+                    featured_media = wpPostThumbnail.id;
+                }
             }
             #endregion
 
@@ -142,6 +146,21 @@ namespace ANNwpsync.Controllers
             if (!String.IsNullOrEmpty(wpPostThumbnail.source_url))
             {
                 content = String.Format("<p><img src='{0}' alt='{1}' /></p>", wpPostThumbnail.source_url, postClone.Title) + content;
+            }
+
+            var postImage = _service.getPostImageByPostID(postClone.PostPublicID);
+            if (postImage.Count > 0)
+            {
+                foreach (var item in postImage)
+                {
+                    string imageFileName = Path.GetFileName(item.Image);
+                    string filePath = rootFolder + @"\uploads\images\posts\" + imageFileName;
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        var wpPostImage = await wpObject.Media.Add(imageFileName, filePath);
+                        content += String.Format("<p><img src='{0}' alt='{1}' /></p>", wpPostImage.source_url, postClone.Title);
+                    }
+                }
             }
             #endregion
 
@@ -222,6 +241,9 @@ namespace ANNwpsync.Controllers
             {
                 Posts newPost = await _handleWPPost(postClone, wpObject, checkHeader.domain, checkHeader.rootPath);
                 Posts wpPost = await wpObject.Post.Add(newPost);
+
+                postClone.PostWebID = wpPost.id;
+                _service.Update(postClone);
 
                 return Ok(wpPost);
             }
