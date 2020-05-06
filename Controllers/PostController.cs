@@ -76,6 +76,8 @@ namespace ANNwpsync.Controllers
             var domain = headers.Where(x => x.Key == "domain").Select(x => x.Value).FirstOrDefault();
             var domainSetting = configuration.GetSection(domain).Get<DomainSettingModel>();
 
+            var ANNconfig = configuration.GetSection("ANNconfig").Get<ANNConfigModel>();
+
             if (String.IsNullOrEmpty(domain))
             {
                 result.statusCode = StatusCodes.Status400BadRequest;
@@ -93,9 +95,9 @@ namespace ANNwpsync.Controllers
                 return result;
             }
 
-            MyRestAPI restAPI = new MyRestAPI("https://{0}/wp-json/jwt-auth/v1/token", "orj0lez", "@HoangAnhPhan828327");
+            RestAPI restAPI = new RestAPI(String.Format("https://{0}/wp-json/jwt-auth/v1/token", domain), "orj0le", "@HoangAnhPhan828327");
 
-            //MyRestAPI restAPI = new MyRestAPI(String.Format("https://{0}/wp-json/wp/v2/", domain), domainSetting.wordpress_key, domainSetting.wordpress_secret, false);
+            //RestAPI restAPI = new RestAPI(String.Format("https://{0}/wp-json/wp/v2/", domain), domainSetting.wordpress_key, domainSetting.wordpress_secret, false);
             //restAPI.oauth_token = domainSetting.wordpress_oauth_token;
             //restAPI.oauth_token_secret = domainSetting.wordpress_oauth_token_secret;
 
@@ -104,6 +106,7 @@ namespace ANNwpsync.Controllers
             result.domain = domain;
             result.success = true;
             result.message = String.Empty;
+            result.rootPath = ANNconfig.root_path;
             result.wp = new Models.Wordpress()
             {
                 restAPI = restAPI,
@@ -111,7 +114,7 @@ namespace ANNwpsync.Controllers
             };
             return result;
         }
-        private async Task<Posts> _handleWPPost(PostClone postClone, WPObject wpObject, string domain)
+        private async Task<Posts> _handleWPPost(PostClone postClone, WPObject wpObject, string domain, string rootFolder)
         {
             #region Category List
             var categories = new List<int>();
@@ -123,18 +126,33 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            //var test = await wpObject.Media.GetAll();
             #region Thumbnail
-            var wpPostThumbnail = await wpObject.Media.Add("post-323-90524679-102448881403878-224407102003609600-o.jpg", @"C:\category-50.jpg");
+            int featured_media = 0;
+            var wpPostThumbnail = new Media();
+            if (!String.IsNullOrEmpty(postClone.Thumbnail))
+            {
+                string thumbnailFileName = Path.GetFileName(postClone.Thumbnail);
+                wpPostThumbnail = await wpObject.Media.Add(thumbnailFileName, rootFolder + @"\uploads\images\posts\" + thumbnailFileName);
+                featured_media = wpPostThumbnail.id;
+            }
+            #endregion
+
+            #region Content
+            string content = postClone.Content;
+            if (!String.IsNullOrEmpty(wpPostThumbnail.source_url))
+            {
+                content = String.Format("<p><img src='{0}' alt='{1}' /></p>", wpPostThumbnail.source_url, postClone.Title) + content;
+            }
             #endregion
 
             return new Posts()
             {
                 title = postClone.Title,
-                content = postClone.Content,
+                content = content,
                 excerpt = postClone.Summary,
-                featured_media = 0,
+                featured_media = featured_media,
                 categories = categories,
+                status = "publish"
             };
         }
         #endregion
@@ -202,7 +220,7 @@ namespace ANNwpsync.Controllers
             #region Thực hiện đồng bộ post clone
             try
             {
-                Posts newPost = await _handleWPPost(postClone, wpObject, checkHeader.domain);
+                Posts newPost = await _handleWPPost(postClone, wpObject, checkHeader.domain, checkHeader.rootPath);
                 Posts wpPost = await wpObject.Post.Add(newPost);
 
                 return Ok(wpPost);

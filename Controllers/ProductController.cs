@@ -53,6 +53,8 @@ namespace ANNwpsync.Controllers
             var domain = headers.Where(x => x.Key == "domain").Select(x => x.Value).FirstOrDefault();
             var domainSetting = configuration.GetSection(domain).Get<DomainSettingModel>();
 
+            var ANNconfig = configuration.GetSection("ANNconfig").Get<ANNConfigModel>();
+
             if (String.IsNullOrEmpty(domain))
             {
                 result.statusCode = StatusCodes.Status400BadRequest;
@@ -76,6 +78,7 @@ namespace ANNwpsync.Controllers
             result.domain = domain;
             result.success = true;
             result.message = String.Empty;
+            result.mainDomain = ANNconfig.main_domain;
             result.wc = new Models.WooCommerce()
             {
                 restAPI = restAPI,

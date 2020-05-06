@@ -14,5 +14,7 @@ namespace ANNwpsync.Models
         public WooCommerce wc { get; set; }
         public Wordpress wp { get; set; }
         public string priceType { get; set; }
+        public string rootPath { get; set; }
+        public string mainDomain { get; set; }
     }
 }
