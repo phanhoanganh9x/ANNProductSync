@@ -15,30 +15,9 @@ using System.Net;
 using System.Threading.Tasks;
 using WooCommerce.NET.WordPress.v2;
 using WooCommerceNET;
-using WooCommerceNET.WooCommerce.v3;
 
 namespace ANNwpsync.Controllers
 {
-    public class MyRestAPI : RestAPI
-    {
-        public MyRestAPI(string url, string key, string secret, bool authorizedHeader = true,
-            Func<string, string> jsonSerializeFilter = null,
-            Func<string, string> jsonDeserializeFilter = null,
-            Action<HttpWebRequest> requestFilter = null) : base(url, key, secret, authorizedHeader, jsonSerializeFilter, jsonDeserializeFilter, requestFilter)
-        {
-        }
-
-        public override T DeserializeJSon<T>(string jsonString)
-        {
-            return JsonConvert.DeserializeObject<T>(jsonString);
-        }
-
-        public override string SerializeJSon<T>(T t)
-        {
-            return JsonConvert.SerializeObject(t);
-        }
-    }
-
     [ApiController]
     [Route("api/v1/wordpress")]
     public class PostController : ControllerBase
@@ -95,7 +74,7 @@ namespace ANNwpsync.Controllers
                 return result;
             }
 
-            RestAPI restAPI = new RestAPI(String.Format("https://{0}/wp-json/jwt-auth/v1/token", domain), "orj0le", "@HoangAnhPhan828327");
+            RestAPI restAPI = new RestAPI(String.Format("https://{0}/wp-json/jwt-auth/v1/token", domain), domainSetting.username, domainSetting.password);
 
             //RestAPI restAPI = new RestAPI(String.Format("https://{0}/wp-json/wp/v2/", domain), domainSetting.wordpress_key, domainSetting.wordpress_secret, false);
             //restAPI.oauth_token = domainSetting.wordpress_oauth_token;
@@ -194,38 +173,20 @@ namespace ANNwpsync.Controllers
             return Ok(posts);
         }
 
-        //[HttpGet]
-        //[Route("post/{postPublicID:int}")]
-        //public async Task<IActionResult> getPost(int postPublicID)
-        //{
-        //    #region Kiểm tra điều kiện header request
-        //    var checkHeader = _checkHeaderRequest(Request.Headers);
-
-        //    if (!checkHeader.success)
-        //        return StatusCode(checkHeader.statusCode, checkHeader.message);
-
-        //    var wpObject = checkHeader.wp.wpObject;
-        //    #endregion
-        //    var post = _service.ge(postPublicID, checkHeader.domain);
-
-        //    if (post == null)
-        //    {
-        //        return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy bài viết trên hệ thống" });
-        //    }
-        //    var wpPost = await wpObject.Post.Get(post.PostWordpressID);
-
-        //    return Ok(wpPost);
-        //}
+        #region Thực hiện post bài viết lên web
+        /// <summary>
+        /// Thực hiện post bài viết
+        /// </summary>
+        /// <param name="postCloneID"></param>
+        /// <returns></returns>
         [HttpPost]
         [Route("post/{postCloneID:int}")]
         public async Task<IActionResult> postProduct(int postCloneID)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
-
             if (!checkHeader.success)
                 return StatusCode(checkHeader.statusCode, checkHeader.message);
-
             var wpObject = checkHeader.wp.wpObject;
             #endregion
 
@@ -255,5 +216,133 @@ namespace ANNwpsync.Controllers
             }
             #endregion
         }
+        #endregion
+        #region Up to the top
+        /// <summary>
+        /// Thực hiện up top product
+        /// </summary>
+        /// <param name="postCloneID"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("post/{postCloneID:int}/uptop")]
+        public async Task<IActionResult> upTopPost(int postCloneID)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+            var wpObject = checkHeader.wp.wpObject;
+            #endregion
+
+            #region Kiểm tra tồn tại clone trong data gốc
+            var postClone = _service.getCloneByID(postCloneID);
+
+            if (postClone == null)
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy clone post" });
+            #endregion
+
+            #region Thực hiện get clone trên web
+            var wpPost = await wpObject.Post.Get(postClone.PostWebID);
+            if (wpPost == null)
+            {
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy bài viết trên web" });
+            }
+            #endregion
+
+            string newTime = DateTime.Now.AddHours(-8).ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss");
+            var updatePost = await wpObject.Post.Update(wpPost.id, new Posts { date_gmt = newTime, modified_gmt = newTime });
+
+            return Ok(updatePost);
+        }
+        #endregion
+        #region Renew post
+        /// <summary>
+        /// Thực hiện renew product
+        /// </summary>
+        /// <param name="postCloneID"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("post/{postCloneID:int}/renew")]
+        public async Task<IActionResult> renewPost(int postCloneID)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+            var wpObject = checkHeader.wp.wpObject;
+            #endregion
+
+            #region Kiểm tra tồn tại clone trong data gốc
+            var postClone = _service.getCloneByID(postCloneID);
+
+            if (postClone == null)
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy clone post" });
+            #endregion
+
+            #region Thực hiện get clone trên web
+            var wpPost = await wpObject.Post.Get(postClone.PostWebID);
+            if (wpPost == null)
+            {
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy bài viết trên web" });
+            }
+            #endregion
+
+            #region Thực hiện làm mới bài viết cũ trên web
+            try
+            {
+                Posts editedPost = await _handleWPPost(postClone, wpObject, checkHeader.domain, checkHeader.rootPath);
+                editedPost.modified_gmt = DateTime.Now.AddHours(-8).ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss");
+                Posts updatePost = await wpObject.Post.Update(wpPost.id, editedPost);
+
+                return Ok(updatePost);
+            }
+            catch (WebException e)
+            {
+                var wcError = JsonConvert.DeserializeObject<WCErrorModel>(e.Message);
+
+                return StatusCode(StatusCodes.Status500InternalServerError, wcError);
+            }
+            #endregion
+        }
+        #endregion
+        #region Delete post
+        /// <summary>
+        /// Delete post
+        /// </summary>
+        /// <param name="postCloneID"></param>
+        /// <returns></returns>
+        [HttpDelete]
+        [Route("post/{postCloneID:int}")]
+        public async Task<IActionResult> deletePost(int postCloneID)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+            var wpObject = checkHeader.wp.wpObject;
+            #endregion
+
+            #region Kiểm tra tồn tại clone trong data gốc
+            var postClone = _service.getCloneByID(postCloneID);
+
+            if (postClone == null)
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy clone post" });
+            #endregion
+
+            #region Thực hiện get clone trên web
+            var wpPost = await wpObject.Post.Get(postClone.PostWebID);
+            if (wpPost == null)
+            {
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy bài viết trên web" });
+            }
+            #endregion
+
+            await wpObject.Post.Delete(wpPost.id, true);
+            postClone.PostWebID = 0;
+            _service.Update(postClone);
+
+            return Ok(wpPost);
+        }
+        #endregion
     }
 }

@@ -15,5 +15,7 @@ namespace ANNwpsync.Models
         public string wordpress_secret { get; set; }
         public string wordpress_oauth_token { get; set; }
         public string wordpress_oauth_token_secret { get; set; }
+        public string username { get; set; }
+        public string password { get; set; }
     }
 }
