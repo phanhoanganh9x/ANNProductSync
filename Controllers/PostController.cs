@@ -97,17 +97,31 @@ namespace ANNwpsync.Controllers
         {
             #region Category List
             var categories = new List<int>();
-            var wpPostCategory = await wpObject.Categories.GetAll(new Dictionary<string, string>() { { "search", postClone.CategoryName } });
+            var wpPostCategory = await wpObject.Categories.GetAll();
             if (wpPostCategory.Count > 0)
             {
-                var wpPostCategoryID = wpPostCategory.Select(x => x.id).FirstOrDefault();
-                categories.Add(wpPostCategoryID);
+                int wpPostCategoryID = wpPostCategory.Where(x => x.name == postClone.CategoryName).Select(x => x.id).FirstOrDefault();
+                if (wpPostCategoryID > 0)
+                {
+                    categories.Add(wpPostCategoryID);
+                }
+                else
+                {
+                    Categories newCategory = new Categories()
+                    {
+                        name = postClone.CategoryName,
+                        description = postClone.CategoryName,
+                        parent = 0,
+                    };
+                    var createCategory = await wpObject.Categories.Add(newCategory);
+                    categories.Add(createCategory.id);
+                }
             }
             #endregion
 
             #region Thumbnail
             int featured_media = 0;
-            var wpPostThumbnail = new Media();
+            Media wpPostThumbnail = new Media();
             if (!String.IsNullOrEmpty(postClone.Thumbnail))
             {
                 string thumbnailFileName = Path.GetFileName(postClone.Thumbnail);
@@ -181,7 +195,7 @@ namespace ANNwpsync.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("post/{postCloneID:int}")]
-        public async Task<IActionResult> postProduct(int postCloneID)
+        public async Task<IActionResult> postPost(int postCloneID)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
@@ -197,16 +211,27 @@ namespace ANNwpsync.Controllers
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy clone post" });
             #endregion
 
+            #region Thực hiện get clone trên web
+            if (postClone.PostWebID != 0)
+            {
+                var wpPost = await wpObject.Post.Get(postClone.PostWebID);
+                if (wpPost != null)
+                {
+                    return BadRequest(new ResponseModel() { success = false, message = "Bài viết này đã tồn tại trên web" });
+                }
+            }
+            #endregion
+
             #region Thực hiện đồng bộ post clone
             try
             {
                 Posts newPost = await _handleWPPost(postClone, wpObject, checkHeader.domain, checkHeader.rootPath);
-                Posts wpPost = await wpObject.Post.Add(newPost);
+                Posts createPost = await wpObject.Post.Add(newPost);
 
-                postClone.PostWebID = wpPost.id;
+                postClone.PostWebID = createPost.id;
                 _service.Update(postClone);
 
-                return Ok(wpPost);
+                return Ok(createPost);
             }
             catch (WebException e)
             {
