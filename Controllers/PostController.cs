@@ -125,7 +125,7 @@ namespace ANNwpsync.Controllers
             if (!String.IsNullOrEmpty(postClone.Thumbnail))
             {
                 string thumbnailFileName = Path.GetFileName(postClone.Thumbnail);
-                string filePath = rootFolder + @"\uploads\images\posts\" + thumbnailFileName;
+                string filePath = rootFolder + postClone.Thumbnail.Replace("/", @"\");
                 if (System.IO.File.Exists(filePath))
                 {
                     wpPostThumbnail = await wpObject.Media.Add(thumbnailFileName, filePath);
@@ -147,7 +147,7 @@ namespace ANNwpsync.Controllers
                 foreach (var item in postImage)
                 {
                     string imageFileName = Path.GetFileName(item.Image);
-                    string filePath = rootFolder + @"\uploads\images\posts\" + imageFileName;
+                    string filePath = rootFolder + item.Image.Replace("/", @"\");
                     if (System.IO.File.Exists(filePath))
                     {
                         var wpPostImage = await wpObject.Media.Add(imageFileName, filePath);
