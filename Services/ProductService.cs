@@ -608,7 +608,7 @@ namespace ANNwpsync.Services
                             categorySlug = c.Slug,
                             name = p.ProductTitle,
                             sku = p.ProductSKU,
-                            avatar = p.ProductImage,
+                            avatar = !String.IsNullOrEmpty(p.ProductImageClean) ? p.ProductImageClean : p.ProductImage,
                             materials = p.Materials,
                             regularPrice = p.Regular_Price.HasValue ? p.Regular_Price.Value : 0,
                             oldPrice = p.Old_Price.HasValue ? p.Old_Price.Value : 0,
