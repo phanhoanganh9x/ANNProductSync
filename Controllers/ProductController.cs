@@ -372,28 +372,6 @@ namespace ANNwpsync.Controllers
                             break;
                     }
                     break;
-                case "nhapsionline.com":
-                    switch (ID)
-                    {
-                        case "0":
-                            addBefore = "Nguồn sỉ";
-                            break;
-                        case "1":
-                            addBefore = "Nguồn hàng sỉ";
-                            break;
-                        case "4":
-                            addBefore = "Top 1 nguồn sỉ";
-                            break;
-                        case "5":
-                            addBefore = "Xưởng sỉ";
-                            break;
-                        case "7":
-                            addBefore = "Chuyên sỉ";
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
                 default:
                     break;
             }
