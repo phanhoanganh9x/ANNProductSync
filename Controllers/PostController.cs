@@ -97,7 +97,8 @@ namespace ANNwpsync.Controllers
         {
             #region Category List
             var categories = new List<int>();
-            var wpPostCategory = await wpObject.Categories.GetAll();
+            var wpPostCategory = await wpObject.Categories.GetAll(new Dictionary<string, string>() {
+                { "per_page", "100" } });
             if (wpPostCategory.Count > 0)
             {
                 int wpPostCategoryID = wpPostCategory.Where(x => x.name == postClone.CategoryName).Select(x => x.id).FirstOrDefault();
