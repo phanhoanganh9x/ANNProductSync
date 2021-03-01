@@ -337,8 +337,8 @@ namespace ANNwpsync.Controllers
         /// </summary>
         /// <param name="postCloneID"></param>
         /// <returns></returns>
-        [HttpDelete]
-        [Route("post/{postCloneID:int}")]
+        [HttpPost]
+        [Route("post/{postCloneID:int}/delete")]
         public async Task<IActionResult> deletePost(int postCloneID)
         {
             #region Kiểm tra điều kiện header request

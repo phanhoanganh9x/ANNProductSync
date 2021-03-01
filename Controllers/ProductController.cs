@@ -178,19 +178,19 @@ namespace ANNwpsync.Controllers
                     switch (ID)
                     {
                         case "1":
-                            addBefore = "Xưởng sỉ";
+                            addBefore = "Nguồn sỉ";
                             break;
                         case "3":
-                            addBefore = "Kho sỉ";
+                            addBefore = "Buôn sỉ";
                             break;
                         case "5":
-                            addBefore = "Bỏ sỉ";
+                            addBefore = "Xưởng chuyên sỉ";
                             break;
                         case "7":
-                            addBefore = "Kho hàng sỉ";
+                            addBefore = "Kho sỉ";
                             break;
                         case "9":
-                            addBefore = "Lấy sỉ";
+                            addBefore = "Nhập sỉ";
                             break;
                         default:
                             break;
@@ -200,19 +200,19 @@ namespace ANNwpsync.Controllers
                     switch (ID)
                     {
                         case "2":
-                            addBefore = "Giá sỉ";
+                            addBefore = "Chuyên sỉ";
                             break;
                         case "4":
-                            addBefore = "Tìm nguồn hàng sỉ";
+                            addBefore = "Nguồn hàng sỉ";
                             break;
                         case "6":
-                            addBefore = "Nơi chuyên sỉ";
+                            addBefore = "Nơi lấy sỉ";
                             break;
                         case "8":
-                            addBefore = "Chuyên bỏ sỉ";
+                            addBefore = "Chỗ sỉ";
                             break;
                         case "0":
-                            addBefore = "Địa điểm sỉ";
+                            addBefore = "Shop sỉ";
                             break;
                         default:
                             break;
@@ -222,19 +222,19 @@ namespace ANNwpsync.Controllers
                     switch (ID)
                     {
                         case "1":
-                            addBefore = "Kho bỏ sỉ";
+                            addBefore = "Xưởng sỉ";
                             break;
                         case "3":
-                            addBefore = "Các shop sỉ";
+                            addBefore = "Top 1 kho sỉ";
                             break;
                         case "5":
-                            addBefore = "Nơi bỏ sỉ";
+                            addBefore = "Nguồn chuyên sỉ";
                             break;
                         case "7":
-                            addBefore = "Chợ bán sỉ";
+                            addBefore = "Cần lấy sỉ";
                             break;
                         case "9":
-                            addBefore = "Bán sỉ";
+                            addBefore = "Shop chuyên sỉ";
                             break;
                         default:
                             break;
@@ -244,19 +244,19 @@ namespace ANNwpsync.Controllers
                     switch (ID)
                     {
                         case "0":
-                            addBefore = "Cần tìm sỉ";
+                            addBefore = "Tìm sỉ";
                             break;
                         case "3":
-                            addBefore = "Top 5 nguồn sỉ";
+                            addBefore = "Kho sỉ";
                             break;
                         case "6":
-                            addBefore = "Những địa chỉ sỉ";
+                            addBefore = "Xưởng bỏ sỉ";
                             break;
                         case "9":
-                            addBefore = "Chợ Tân Bình sỉ";
+                            addBefore = "Giá sỉ";
                             break;
                         case "8":
-                            addBefore = "Ở đâu sỉ";
+                            addBefore = "Muốn lấy sỉ";
                             break;
                         default:
                             break;
@@ -266,19 +266,19 @@ namespace ANNwpsync.Controllers
                     switch (ID)
                     {
                         case "0":
-                            addBefore = "Tuyển sỉ";
+                            addBefore = "Chuyên sỉ";
                             break;
                         case "2":
-                            addBefore = "Tuyển ctv bán";
+                            addBefore = "Giá sỉ";
                             break;
                         case "4":
-                            addBefore = "Nhập sỉ";
+                            addBefore = "Nguồn hàng sỉ";
                             break;
                         case "6":
-                            addBefore = "Xưởng chuyên sỉ";
+                            addBefore = "Kho sỉ";
                             break;
                         case "8":
-                            addBefore = "Muốn tìm nơi sỉ";
+                            addBefore = "Tìm sỉ";
                             break;
                         default:
                             break;
@@ -288,19 +288,19 @@ namespace ANNwpsync.Controllers
                     switch (ID)
                     {
                         case "1":
-                            addBefore = "Kho chuyên sỉ";
+                            addBefore = "Xưởng sỉ";
                             break;
                         case "3":
-                            addBefore = "Địa chỉ sỉ";
+                            addBefore = "Cần lấy sỉ";
                             break;
                         case "5":
-                            addBefore = "Chợ sỉ";
+                            addBefore = "Kho sỉ";
                             break;
                         case "7":
-                            addBefore = "Shop sỉ";
+                            addBefore = "Giá sỉ";
                             break;
                         case "9":
-                            addBefore = "Top xưởng sỉ";
+                            addBefore = "Nhập sỉ";
                             break;
                         default:
                             break;
@@ -310,19 +310,19 @@ namespace ANNwpsync.Controllers
                     switch (ID)
                     {
                         case "0":
-                            addBefore = "Kho sỉ";
+                            addBefore = "Nguồn sỉ";
                             break;
                         case "2":
-                            addBefore = "Buôn sỉ";
+                            addBefore = "Xưởng chuyên sỉ";
                             break;
                         case "4":
-                            addBefore = "Tuyển sỉ";
+                            addBefore = "Cần lấy sỉ";
                             break;
                         case "6":
-                            addBefore = "Nguồn hàng sỉ";
+                            addBefore = "Bán sỉ";
                             break;
                         case "8":
-                            addBefore = "Lấy sỉ";
+                            addBefore = "Shop chuyên sỉ";
                             break;
                         default:
                             break;
@@ -332,19 +332,19 @@ namespace ANNwpsync.Controllers
                     switch (ID)
                     {
                         case "0":
-                            addBefore = "Chuyên sỉ";
+                            addBefore = "Xưởng bỏ sỉ";
                             break;
                         case "3":
-                            addBefore = "Kho giá sỉ";
+                            addBefore = "Phân phối sỉ";
                             break;
                         case "6":
-                            addBefore = "Giá sỉ";
+                            addBefore = "Nguồn hàng sỉ";
                             break;
                         case "9":
-                            addBefore = "Bán buôn";
+                            addBefore = "Kho chuyên sỉ";
                             break;
                         case "5":
-                            addBefore = "Bỏ sỉ";
+                            addBefore = "Lấy sỉ";
                             break;
                         default:
                             break;
@@ -354,19 +354,19 @@ namespace ANNwpsync.Controllers
                     switch (ID)
                     {
                         case "0":
-                            addBefore = "Nguồn hàng sỉ";
+                            addBefore = "Kho hàng sỉ";
                             break;
                         case "2":
-                            addBefore = "Nguồn sỉ";
+                            addBefore = "Shop sỉ";
                             break;
                         case "3":
-                            addBefore = "Lấy sỉ";
+                            addBefore = "Chuyên sỉ";
                             break;
                         case "7":
-                            addBefore = "Buôn sỉ";
+                            addBefore = "Sỉ";
                             break;
                         case "8":
-                            addBefore = "Thị trường sỉ";
+                            addBefore = "Xưởng sỉ";
                             break;
                         default:
                             break;
@@ -376,19 +376,19 @@ namespace ANNwpsync.Controllers
                     switch (ID)
                     {
                         case "0":
-                            addBefore = "Nhập sỉ";
+                            addBefore = "Bán sỉ";
                             break;
                         case "1":
-                            addBefore = "Nguồn hàng sỉ";
+                            addBefore = "Nhập hàng sỉ";
                             break;
                         case "4":
-                            addBefore = "Top 1 nguồn sỉ";
+                            addBefore = "Ở đâu sỉ";
                             break;
                         case "5":
-                            addBefore = "Xưởng sỉ";
+                            addBefore = "Nhập hàng";
                             break;
                         case "7":
-                            addBefore = "Chuyên sỉ";
+                            addBefore = "Shop sỉ";
                             break;
                         default:
                             break;
@@ -861,8 +861,8 @@ namespace ANNwpsync.Controllers
         /// </summary>
         /// <param name="productID"></param>
         /// <returns></returns>
-        [HttpDelete]
-        [Route("product/{productID:int}")]
+        [HttpPost]
+        [Route("product/{productID:int}/delete")]
         public async Task<IActionResult> deleteProduct(int productID)
         {
             #region Kiểm tra điều kiện header request
