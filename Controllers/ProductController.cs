@@ -543,13 +543,17 @@ namespace ANNwpsync.Controllers
 
             #region Content
             string productContent = "";
-            productContent += "Chất liệu " + product.materials + ".<br><br>";
-            productContent += product.content + "<br>";
-            productContent += "<h3>" + product.name + "</h3>";
-            foreach (var item in imageNameList)
+            string[] noMaterials = { "my-pham", "nuoc-hoa", "thuc-pham-chuc-nang", "tong-hop" };
+            if (!noMaterials.Contains(product.categorySlug))
             {
-                productContent += "<img alt='" + productName + "' src='/wp-content/uploads/" + item.src + "' /><br>";
+                productContent += "Chất liệu " + product.materials + ".<br><br>";
             }
+            productContent += product.content + "<br>";
+            //productContent += "<h3>" + product.name + "</h3>";
+            //foreach (var item in imageNameList)
+            //{
+            //    productContent += "<img alt='" + productName + "' src='/wp-content/uploads/" + item.src + "' /><br>";
+            //}
             #endregion
 
             return new Product()
@@ -604,6 +608,15 @@ namespace ANNwpsync.Controllers
                 //Add new product
                 Product newProduct = await _handleWCProduct(product, wcObject, checkHeader.priceType, checkHeader.domain);
                 Product wcProduct = await wcObject.Product.Add(newProduct);
+
+                #region Update hình trong nội dung sản phẩm
+                string productContent = wcProduct.description + "<h3>" + product.name + "</h3>";
+                foreach (var item in wcProduct.images)
+                {
+                    productContent += "<img alt='" + product.name + "' src='/wp-content/uploads/" + System.IO.Path.GetFileName(item.src) + "' /><br>";
+                }
+                var updateProduct = await wcObject.Product.Update(wcProduct.id.Value, new Product { description = productContent });
+                #endregion
 
                 #region Thực hiện post các biến thể nếu là sản phẩm biến thể
                 if (product.type == ProductType.Variable && wcProduct != null)
@@ -778,6 +791,38 @@ namespace ANNwpsync.Controllers
             return Ok(updateProduct);
         }
         #endregion
+        #region Update SKU
+        /// <summary>
+        /// Thực hiện update SKU
+        /// </summary>
+        /// <param name="oldSKU"></param>
+        /// <param name="newSKU"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("product/updateSKU/{oldSKU}/{newSKU}")]
+        public async Task<IActionResult> changeSKU(string oldSKU, string newSKU)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+            var wcObject = checkHeader.wc.wcObject;
+            #endregion
+
+            #region Thực hiện get sản phẩm trên web bằng SKU cũ
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", oldSKU } });
+            if (wcProduct.Count == 0)
+            {
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
+            }
+            #endregion
+
+            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            var updateProduct = await wcObject.Product.Update(wcProductID, new Product { sku = newSKU });
+
+            return Ok(updateProduct);
+        }
+        #endregion
         #region Renew product
         /// <summary>
         /// Thực hiện renew product
@@ -831,6 +876,15 @@ namespace ANNwpsync.Controllers
                 #region Update sản phẩm
                 Product updateProduct = await _handleWCProduct(product, wcObject, checkHeader.priceType, checkHeader.domain);
                 Product wcProduct = await wcObject.Product.Update(wcProductID, updateProduct);
+                #endregion
+
+                #region Update hình trong nội dung sản phẩm
+                string productContent = wcProduct.description + "<h3>" + product.name + "</h3>";
+                foreach (var item in wcProduct.images)
+                {
+                    productContent += "<img alt='" + product.name + "' src='/wp-content/uploads/" + System.IO.Path.GetFileName(item.src) + "' /><br>";
+                }
+                var upProduct = await wcObject.Product.Update(wcProduct.id.Value, new Product { description = productContent });
                 #endregion
 
                 #region Thực hiện post các biến thể nếu là sản phẩm biến thể

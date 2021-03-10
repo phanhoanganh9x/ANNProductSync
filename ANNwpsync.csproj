@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <AssemblyName>ANNwpsync</AssemblyName>
     <RootNamespace>ANNwpsync</RootNamespace>
+    <UserSecretsId>a4a6d430-e2fd-4efc-9f3d-0a95cd539198</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
