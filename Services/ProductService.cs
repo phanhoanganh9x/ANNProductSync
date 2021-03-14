@@ -554,6 +554,25 @@ namespace ANNwpsync.Services
             }
         }
         #endregion
+        #region Lấy thông tin sản phẩm theo SKU
+        /// <summary>
+        /// Lấy thông tin sản phẩm theo SKU
+        /// </summary>
+        /// <param name="SKU"></param>
+        /// <returns></returns>
+        public ProductModel getProductBySKU(string SKU)
+        {
+            using (var con = new SQLServerContext())
+            {
+                // Kiểm tra có sản phẩm không
+                var product = con.tbl_Product.Where(x => x.ProductSKU == SKU).FirstOrDefault();
+                if (product == null)
+                    return null;
+
+                return getProductBySlug(product.Slug);
+            }
+        }
+        #endregion
         #region Lấy thông tin sản phẩm theo slug
         /// <summary>
         /// Lấy thông tin sản phẩm theo slug
