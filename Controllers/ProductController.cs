@@ -569,9 +569,16 @@ namespace ANNwpsync.Controllers
                 images = images,
                 attributes = attributes,
                 manage_stock = product.manage_stock,
-                stock_quantity = product.stock_quantity
+                stock_quantity = product.stock_quantity,
+                meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
+                            {
+                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                {
+                                    key = "_retail_price",
+                                    value = product.retailPrice
+                                }
+                            }
             };
-
             }
         #endregion
 
