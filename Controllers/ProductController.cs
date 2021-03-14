@@ -543,10 +543,12 @@ namespace ANNwpsync.Controllers
 
             #region Content
             string productContent = "";
+            string shortDescription = "";
             string[] noMaterials = { "my-pham", "nuoc-hoa", "thuc-pham-chuc-nang", "tong-hop" };
             if (!noMaterials.Contains(product.categorySlug))
             {
                 productContent += "Chất liệu " + product.materials + ".<br><br>";
+                shortDescription += "Chất liệu " + product.materials;
             }
             productContent += product.content + "<br>";
             //productContent += "<h3>" + product.name + "</h3>";
@@ -563,7 +565,7 @@ namespace ANNwpsync.Controllers
                 regular_price = regular_price,
                 type = product.type,
                 description = productContent,
-                short_description = "Chất liệu " + product.materials,
+                short_description = shortDescription,
                 categories = categories,
                 tags = tags,
                 images = images,
@@ -618,6 +620,7 @@ namespace ANNwpsync.Controllers
 
                 #region Update hình trong nội dung sản phẩm
                 string productContent = wcProduct.description + "<h3>" + product.name + "</h3>";
+                wcProduct.images.RemoveAt(0);
                 foreach (var item in wcProduct.images)
                 {
                     productContent += "<img alt='" + product.name + "' src='/wp-content/uploads/" + System.IO.Path.GetFileName(item.src) + "' /><br>";
@@ -933,6 +936,7 @@ namespace ANNwpsync.Controllers
 
                 #region Update hình trong nội dung sản phẩm
                 string productContent = wcProduct.description + "<h3>" + product.name + "</h3>";
+                wcProduct.images.RemoveAt(0);
                 foreach (var item in wcProduct.images)
                 {
                     productContent += "<img alt='" + product.name + "' src='/wp-content/uploads/" + System.IO.Path.GetFileName(item.src) + "' /><br>";
