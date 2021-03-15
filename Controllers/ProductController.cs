@@ -611,6 +611,10 @@ namespace ANNwpsync.Controllers
 
                 #region Update hình trong nội dung sản phẩm
                 string productContent = wcProduct.description + "<h3>" + product.name + "</h3>";
+                
+                // Delete clean image
+                wcProduct.images.RemoveAt(0);
+                
                 foreach (var item in wcProduct.images)
                 {
                     productContent += "<img alt='" + product.name + "' src='/wp-content/uploads/" + System.IO.Path.GetFileName(item.src) + "' /><br>";
@@ -880,6 +884,10 @@ namespace ANNwpsync.Controllers
 
                 #region Update hình trong nội dung sản phẩm
                 string productContent = wcProduct.description + "<h3>" + product.name + "</h3>";
+
+                // Delete clean image
+                wcProduct.images.RemoveAt(0);
+
                 foreach (var item in wcProduct.images)
                 {
                     productContent += "<img alt='" + product.name + "' src='/wp-content/uploads/" + System.IO.Path.GetFileName(item.src) + "' /><br>";
