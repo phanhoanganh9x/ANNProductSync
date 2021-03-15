@@ -543,10 +543,12 @@ namespace ANNwpsync.Controllers
 
             #region Content
             string productContent = "";
+            string shortDescription = "";
             string[] noMaterials = { "my-pham", "nuoc-hoa", "thuc-pham-chuc-nang", "tong-hop" };
             if (!noMaterials.Contains(product.categorySlug))
             {
                 productContent += "Chất liệu " + product.materials + ".<br><br>";
+                shortDescription += "Chất liệu " + product.materials;
             }
             productContent += product.content + "<br>";
             //productContent += "<h3>" + product.name + "</h3>";
@@ -563,15 +565,22 @@ namespace ANNwpsync.Controllers
                 regular_price = regular_price,
                 type = product.type,
                 description = productContent,
-                short_description = "Chất liệu " + product.materials,
+                short_description = shortDescription,
                 categories = categories,
                 tags = tags,
                 images = images,
                 attributes = attributes,
                 manage_stock = product.manage_stock,
-                stock_quantity = product.stock_quantity
+                stock_quantity = product.stock_quantity,
+                meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
+                            {
+                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                {
+                                    key = "_retail_price",
+                                    value = product.retailPrice
+                                }
+                            }
             };
-
             }
         #endregion
 
@@ -611,10 +620,7 @@ namespace ANNwpsync.Controllers
 
                 #region Update hình trong nội dung sản phẩm
                 string productContent = wcProduct.description + "<h3>" + product.name + "</h3>";
-                
-                // Delete clean image
                 wcProduct.images.RemoveAt(0);
-                
                 foreach (var item in wcProduct.images)
                 {
                     productContent += "<img alt='" + product.name + "' src='/wp-content/uploads/" + System.IO.Path.GetFileName(item.src) + "' /><br>";
@@ -804,7 +810,7 @@ namespace ANNwpsync.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("product/updateSKU/{oldSKU}/{newSKU}")]
-        public async Task<IActionResult> changeSKU(string oldSKU, string newSKU)
+        public async Task<IActionResult> updateSKU(string oldSKU, string newSKU)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
@@ -823,6 +829,52 @@ namespace ANNwpsync.Controllers
 
             int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
             var updateProduct = await wcObject.Product.Update(wcProductID, new Product { sku = newSKU });
+
+            return Ok(updateProduct);
+        }
+        #endregion
+        #region Update Retail Price
+        /// <summary>
+        /// Thực hiện update SKU
+        /// </summary>
+        /// <param name="productID"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("product/updateRetailPrice/{productID:int}")]
+        public async Task<IActionResult> updateRetailPrice(int productID)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+            var wcObject = checkHeader.wc.wcObject;
+            #endregion
+
+            #region Kiểm tra tồn tại sản phẩm trong data gốc
+            var product = _service.getProductByID(productID);
+            if (product == null)
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên hệ thống gốc" });
+            #endregion
+
+            #region Thực hiện get sản phẩm trên web bằng SKU cũ
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
+            if (wcProduct.Count == 0)
+            {
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
+            }
+            #endregion
+
+            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            var updateProduct = await wcObject.Product.Update(wcProductID, new Product {
+                meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
+                            {
+                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                {
+                                    key = "_retail_price",
+                                    value = product.retailPrice
+                                }
+                            }
+            });
 
             return Ok(updateProduct);
         }
@@ -884,10 +936,7 @@ namespace ANNwpsync.Controllers
 
                 #region Update hình trong nội dung sản phẩm
                 string productContent = wcProduct.description + "<h3>" + product.name + "</h3>";
-
-                // Delete clean image
                 wcProduct.images.RemoveAt(0);
-
                 foreach (var item in wcProduct.images)
                 {
                     productContent += "<img alt='" + product.name + "' src='/wp-content/uploads/" + System.IO.Path.GetFileName(item.src) + "' /><br>";
