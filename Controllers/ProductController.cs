@@ -623,7 +623,7 @@ namespace ANNwpsync.Controllers
                 wcProduct.images.RemoveAt(0);
                 foreach (var item in wcProduct.images)
                 {
-                    productContent += "<img alt='" + product.name + "' src='/wp-content/uploads/" + System.IO.Path.GetFileName(item.src) + "' /><br>";
+                    productContent += String.Format("<p><img src='/wp-content/uploads/{0}' alt='{1}' /></p>", System.IO.Path.GetFileName(item.src), product.name);
                 }
                 var updateProduct = await wcObject.Product.Update(wcProduct.id.Value, new Product { description = productContent });
                 #endregion
@@ -939,7 +939,7 @@ namespace ANNwpsync.Controllers
                 wcProduct.images.RemoveAt(0);
                 foreach (var item in wcProduct.images)
                 {
-                    productContent += "<img alt='" + product.name + "' src='/wp-content/uploads/" + System.IO.Path.GetFileName(item.src) + "' /><br>";
+                    productContent += String.Format("<p><img src='/wp-content/uploads/{0}' alt='{1}' /></p>", System.IO.Path.GetFileName(item.src), product.name);
                 }
                 var upProduct = await wcObject.Product.Update(wcProduct.id.Value, new Product { description = productContent });
                 #endregion
