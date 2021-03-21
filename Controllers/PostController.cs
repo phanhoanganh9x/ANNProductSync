@@ -166,7 +166,7 @@ namespace ANNwpsync.Controllers
                     if (System.IO.File.Exists(filePath))
                     {
                         var wpPostImage = await wpObject.Media.Add(imageFileName, filePath);
-                        content += String.Format("<p><img src='{0}' alt='{1}' /></p>", wpPostImage.source_url, postClone.Title);
+                        content += String.Format("<p><img src='/wp-content/uploads/{0}' alt='{1}' /></p>", System.IO.Path.GetFileName(wpPostImage.source_url), postClone.Title);
                     }
                 }
             }
