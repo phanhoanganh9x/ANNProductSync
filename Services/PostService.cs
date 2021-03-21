@@ -117,8 +117,19 @@ namespace ANNwpsync.Services
         {
             using (var con = new SQLServerContext())
             {
-                // Kiểm tra có bài viết không
                 var data = con.PostPublicImage.Where(x => x.PostID == postPublicID).OrderByDescending(x => x.ID).ToList();
+
+                if (data == null)
+                    return null;
+
+                return data;
+            }
+        }
+        public List<PostVideo> getVideoByPostID(int postPublicID)
+        {
+            using (var con = new SQLServerContext())
+            {
+                var data = con.PostVideo.Where(x => x.PostId == postPublicID).ToList();
 
                 if (data == null)
                     return null;

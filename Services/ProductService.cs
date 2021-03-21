@@ -635,7 +635,8 @@ namespace ANNwpsync.Services
                             content = p.ProductContent,
                             slug = p.Slug,
                             preOrder = p.PreOrder,
-                            productStyle = p.ProductStyle.HasValue ? p.ProductStyle.Value : 1
+                            productStyle = p.ProductStyle.HasValue ? p.ProductStyle.Value : 1,
+                            shortDescription = p.ShortDescription
                         }
                     )
                     .OrderBy(x => x.id)
@@ -676,7 +677,8 @@ namespace ANNwpsync.Services
                             tags = tags,
                             type = parent.pro.productStyle == 1 ? "simple" : "variable",
                             manage_stock = parent.pro.productStyle == 1 ? true : false,
-                            stock_quantity = parent.pro.productStyle == 1 ? (child != null ? child.quantity : 0) : 0
+                            stock_quantity = parent.pro.productStyle == 1 ? (child != null ? child.quantity : 0) : 0,
+                            short_description = parent.pro.shortDescription
                         }
                     )
                     .OrderBy(o => o.id)
@@ -914,6 +916,18 @@ namespace ANNwpsync.Services
                 {
                     return images.Select(x => Thumbnail.getURL(x, Thumbnail.Size.Source)).ToList();
                 }
+            }
+        }
+        public List<ProductVideo> getVideoByProductID(int productID)
+        {
+            using (var con = new SQLServerContext())
+            {
+                var data = con.ProductVideo.Where(x => x.ProductId == productID).ToList();
+
+                if (data == null)
+                    return null;
+
+                return data;
             }
         }
         #endregion
