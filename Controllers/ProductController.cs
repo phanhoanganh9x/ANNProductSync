@@ -546,15 +546,13 @@ namespace ANNwpsync.Controllers
             string shortDescription = product.short_description + "<br>";
 
             // Video
-            string videoHTML = "";
             var videoList = _service.getVideoByProductID(product.id);
             if (videoList.Count > 0)
             {
                 foreach (var item in videoList)
                 {
-                    videoHTML += String.Format("<iframe width='560' height='315' src='https://www.youtube.com/embed/{0}?controls=0' title='{1}' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><br>", item.VideoId, product.name);
+                    productContent += String.Format("<iframe width='560' height='315' src='https://www.youtube.com/embed/{0}?controls=0' title='{1}' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><br>", item.VideoId, product.name);
                 }
-                productContent += videoHTML;
             }
 
             // Materials
