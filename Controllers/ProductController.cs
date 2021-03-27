@@ -543,19 +543,27 @@ namespace ANNwpsync.Controllers
 
             #region Content
             string productContent = "";
-            string shortDescription = "";
+            string shortDescription = product.short_description + "<br>";
+
+            // Video
+            var videoList = _service.getVideoByProductID(product.id);
+            if (videoList.Count > 0)
+            {
+                foreach (var item in videoList)
+                {
+                    productContent += String.Format("<iframe width='560' height='315' src='https://www.youtube.com/embed/{0}?controls=0' title='{1}' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><br>", item.VideoId, product.name);
+                }
+            }
+
+            // Materials
             string[] noMaterials = { "my-pham", "nuoc-hoa", "thuc-pham-chuc-nang", "tong-hop" };
             if (!noMaterials.Contains(product.categorySlug))
             {
                 productContent += "Chất liệu " + product.materials + ".<br><br>";
                 shortDescription += "Chất liệu " + product.materials;
             }
+
             productContent += product.content + "<br>";
-            //productContent += "<h3>" + product.name + "</h3>";
-            //foreach (var item in imageNameList)
-            //{
-            //    productContent += "<img alt='" + productName + "' src='/wp-content/uploads/" + item.src + "' /><br>";
-            //}
             #endregion
 
             return new Product()

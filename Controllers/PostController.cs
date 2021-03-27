@@ -137,6 +137,20 @@ namespace ANNwpsync.Controllers
 
             #region Content
             string content = postClone.Content;
+
+            // Video
+            string videoHTML = "";
+            var videoList = _service.getVideoByPostID(postClone.PostPublicID);
+            if (videoList.Count > 0)
+            {
+                foreach (var item in videoList)
+                {
+                    videoHTML += String.Format("<iframe width='560' height='315' src='https://www.youtube.com/embed/{0}?controls=0' title='{1}' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><br>", item.VideoId, postClone.Title);
+                }
+                content = videoHTML + content;
+            }
+
+            // Image
             if (!String.IsNullOrEmpty(wpPostThumbnail.source_url))
             {
                 content = String.Format("<p><img src='{0}' alt='{1}' /></p>", wpPostThumbnail.source_url, postClone.Title) + content;

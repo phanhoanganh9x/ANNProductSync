@@ -41,5 +41,8 @@ namespace ANNwpsync.Models.SQLServer
         public string Color { get; set; }
         public bool PreOrder { get; set; }
         public Nullable<double> Old_Price { get; set; }
+        public bool SyncKiotViet { get; set; }
+        public string EnName { get; set; }
+        public string ShortDescription { get; set; }
     }
 }
