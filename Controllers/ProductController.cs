@@ -879,6 +879,83 @@ namespace ANNwpsync.Controllers
             return Ok(updateProduct);
         }
         #endregion
+        #region Update Product Tag
+        /// <summary>
+        /// Thực hiện update SKU
+        /// </summary>
+        /// <param name="productID"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("product/updateProductTag/{productID:int}")]
+        public async Task<IActionResult> updateProductTag(int productID)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+            var wcObject = checkHeader.wc.wcObject;
+            #endregion
+
+            #region Kiểm tra tồn tại sản phẩm trong data gốc
+            var product = _service.getProductByID(productID);
+            if (product == null)
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên hệ thống gốc" });
+            #endregion
+
+            #region Thực hiện get sản phẩm trên web bằng SKU cũ
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
+            if (wcProduct.Count == 0)
+            {
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
+            }
+            #endregion
+
+            var oldTags = wcProduct.FirstOrDefault().tags;
+
+            var tags = new List<ProductTagLine>();
+            foreach (var tag in product.tags)
+            {
+                if (tag.name == "hot")
+                {
+                    continue;
+                }
+
+                var wcTags = await wcObject.Tag.GetAll(new Dictionary<string, string>()
+                {
+                    {"per_page", "50"},
+                    {"search", tag.name}
+                });
+
+                // tìm thấy trên WP
+                if (wcTags != null && wcTags.Count > 0)
+                {
+                    var wcTag = wcTags.Where(x => x.name == tag.name).FirstOrDefault();
+
+                    if (wcTag != null)
+                    {
+                        tags.Add(new ProductTagLine() { id = wcTag.id });
+                        continue;
+                    }
+
+                }
+
+                var wcTagNew = await _createWCProductTag(wcObject, tag.name);
+
+                if (wcTagNew != null)
+                    tags.Add(new ProductTagLine() { id = wcTagNew.id });
+            }
+
+            var allTags = tags.Concat(oldTags).Distinct().ToList();
+
+            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            var updateProduct = await wcObject.Product.Update(wcProductID, new Product
+            {
+                tags = allTags
+            });
+
+            return Ok(updateProduct);
+        }
+        #endregion
         #region Renew product
         /// <summary>
         /// Thực hiện renew product
