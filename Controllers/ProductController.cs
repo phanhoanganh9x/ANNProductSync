@@ -993,6 +993,7 @@ namespace ANNwpsync.Controllers
                     tags.Add(new ProductTagLine() { id = wcTagNew.id });
             }
 
+            // Trộn tags WP và tags hệ thống gốc sau đó lọc duplicate
             var allTags = tags.Concat(oldTags).Distinct().ToList();
 
             int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
