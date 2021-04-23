@@ -575,7 +575,7 @@ namespace ANNwpsync.Controllers
             }
 
             // Materials
-            string[] noMaterials = { "my-pham", "nuoc-hoa", "thuc-pham-chuc-nang", "tong-hop" };
+            string[] noMaterials = { "my-pham", "kem-face", "kem-body", "serum", "tam-trang", "sua-tam", "sua-rua-mat", "dau-goi-dau", "son-moi", "kem-chong-nang", "my-pham-tong-hop", "nuoc-hoa", "nuoc-hoa-charme", "nuoc-hoa-noi-dia-trung", "nuoc-hoa-vung-kin", "nuoc-hoa-gia-re", "bao-li-xi-tet", "thuc-pham-chuc-nang", "tong-hop" };
             if (!noMaterials.Contains(product.categorySlug))
             {
                 productContent += "Chất liệu " + product.materials + ".<br><br>";
