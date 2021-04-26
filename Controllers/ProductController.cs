@@ -1111,6 +1111,59 @@ namespace ANNwpsync.Controllers
             #endregion
         }
         #endregion
+        #region Change product category
+        /// <summary>
+        /// Thực hiện up top product
+        /// </summary>
+        /// <param name="productID"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("product/updateCategory/{productID:int}")]
+        public async Task<IActionResult> changeProductCategory(int productID)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+            var wcObject = checkHeader.wc.wcObject;
+            #endregion
+
+            #region Kiểm tra tồn tại sản phẩm trong data gốc
+            var product = _service.getProductByID(productID);
+            if (product == null)
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên hệ thống gốc" });
+            #endregion
+
+            #region Thực hiện get sản phẩm trên web
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
+            if (wcProduct.Count == 0)
+            {
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
+            }
+            #endregion
+
+            #region Category List
+            var categories = new List<ProductCategoryLine>();
+            var wcProductCategory = await wcObject.Category.GetAll(new Dictionary<string, string>() { { "search", product.categoryName } });
+            if (wcProductCategory.Count > 0)
+            {
+                var wcProductCategoryID = wcProductCategory.Select(x => x.id).FirstOrDefault();
+                categories.Add(new ProductCategoryLine() { id = wcProductCategoryID });
+            }
+            else
+            {
+
+            }
+            #endregion
+
+            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            var updateProduct = await wcObject.Product.Update(wcProductID, new Product { 
+                categories = categories 
+            });
+
+            return Ok(updateProduct);
+        }
+        #endregion
         #region Delete Product
         /// <summary>
         /// Thực hiện delete product
