@@ -636,7 +636,9 @@ namespace ANNwpsync.Services
                             slug = p.Slug,
                             preOrder = p.PreOrder,
                             productStyle = p.ProductStyle.HasValue ? p.ProductStyle.Value : 1,
-                            shortDescription = p.ShortDescription
+                            shortDescription = p.ShortDescription,
+                            Price10 = p.Price10.HasValue ? p.Price10.Value : 0,
+                            BestPrice = p.BestPrice.HasValue ? p.BestPrice.Value : 0,
                         }
                     )
                     .OrderBy(x => x.id)
@@ -678,7 +680,9 @@ namespace ANNwpsync.Services
                             type = parent.pro.productStyle == 1 ? "simple" : "variable",
                             manage_stock = parent.pro.productStyle == 1 ? true : false,
                             stock_quantity = parent.pro.productStyle == 1 ? (child != null ? child.quantity : 0) : 0,
-                            short_description = parent.pro.shortDescription
+                            short_description = parent.pro.shortDescription,
+                            Price10 = parent.pro.Price10,
+                            BestPrice = parent.pro.BestPrice
                         }
                     )
                     .OrderBy(o => o.id)

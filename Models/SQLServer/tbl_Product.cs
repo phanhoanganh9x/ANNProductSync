@@ -44,5 +44,7 @@ namespace ANNwpsync.Models.SQLServer
         public bool SyncKiotViet { get; set; }
         public string EnName { get; set; }
         public string ShortDescription { get; set; }
+        public Nullable<double> Price10 { get; set; }
+        public Nullable<double> BestPrice { get; set; }
     }
 }
