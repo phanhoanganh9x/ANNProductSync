@@ -432,7 +432,7 @@ namespace ANNwpsync.Controllers
         /// <param name="priceType"></param>
         /// <param name="domain"></param>
         /// <returns></returns>
-        private async Task<Product> _handleWCProduct(ProductModel product, WCObject wcObject, string priceType, string domain)
+        private async Task<Product> _handleWCProduct(ProductModel product, WCObject wcObject, string priceType, string domain, bool cleanName = false)
         {
             #region Regular Price
             decimal? regular_price = null;
@@ -493,11 +493,9 @@ namespace ANNwpsync.Controllers
 
             #region Image List
             var images = new List<ProductImage>();
-            var imageNameList = new List<ProductImage>();
             if (!String.IsNullOrEmpty(product.avatar))
             {
                 images.Add(new ProductImage() { src = String.Format("http://hethongann.com/uploads/images/{0}", product.avatar), alt = product.name, position = 0 });
-                imageNameList.Add(new ProductImage() { src = product.avatar, alt = product.name, position = 0 });
             }
 
             if (product.images.Count > 0)
@@ -514,9 +512,13 @@ namespace ANNwpsync.Controllers
                 if (product.images.Count > 0)
                 {
                     images.AddRange(product.images.Select(x => new ProductImage() { src = String.Format("http://hethongann.com/uploads/images/{0}", x), alt = product.name }).ToList());
-                    imageNameList.AddRange(product.images.Select(x => new ProductImage() { src = x, alt = product.name }).ToList());
                 }
 
+            }
+            // nếu post sản phẩm clean name thì đảo image
+            if (cleanName == true && images.Count > 1)
+            {
+                images = images.OrderBy(x => x.position).ToList();
             }
             #endregion
 
@@ -556,8 +558,17 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            #region Product Name
+            #region Product Name & SKU & catalog_visibility
             string productName = _renameProduct(domain, product.id, product.name);
+            string productSKU = product.sku;
+            string catalogVisibility = "visible";
+            // xử lý name - SKU - visibility khi post sản phẩm clean name
+            if (cleanName == true)
+            {
+                productName = String.IsNullOrEmpty(product.CleanName) ? product.name : product.CleanName;
+                productSKU = product.sku + "ANN";
+                catalogVisibility = "hidden";
+            }
             #endregion
 
             #region Content
@@ -575,20 +586,28 @@ namespace ANNwpsync.Controllers
             }
 
             // Materials
-            string[] noMaterials = { "my-pham", "kem-face", "kem-body", "serum", "tam-trang", "sua-tam", "sua-rua-mat", "dau-goi-dau", "son-moi", "kem-chong-nang", "my-pham-tong-hop", "nuoc-hoa", "nuoc-hoa-charme", "nuoc-hoa-noi-dia-trung", "nuoc-hoa-vung-kin", "nuoc-hoa-gia-re", "bao-li-xi-tet", "thuc-pham-chuc-nang", "tong-hop" };
+            string[] noMaterials = { "my-pham", "kem-face", "kem-body", "serum", "tam-trang", "sua-tam", "sua-rua-mat", "dau-goi-dau", "son-moi", "kem-chong-nang", "my-pham-tong-hop", "mat-na-duong-da", "nuoc-hoa", "nuoc-hoa-charme", "nuoc-hoa-noi-dia-trung", "nuoc-hoa-vung-kin", "nuoc-hoa-mini", "nuoc-hoa-full-size", "bao-li-xi-tet", "thuc-pham-chuc-nang", "tong-hop" };
             if (!noMaterials.Contains(product.categorySlug))
             {
                 productContent += "Chất liệu " + product.materials + ".<br><br>";
                 shortDescription += "Chất liệu " + product.materials;
             }
 
-            productContent += product.content + "<br>";
+            // Nếu post sản phẩm clean name thì lấy mô tả ngắn làm nội dung
+            if (cleanName == true)
+            {
+                productContent += product.short_description + "<br>";
+            }
+            else
+            {
+                productContent += product.content + "<br>";
+            }
             #endregion
 
             return new Product()
             {
                 name = productName,
-                sku = product.sku,
+                sku = productSKU,
                 regular_price = regular_price,
                 type = product.type,
                 description = productContent,
@@ -599,6 +618,7 @@ namespace ANNwpsync.Controllers
                 attributes = attributes,
                 manage_stock = product.manage_stock,
                 stock_quantity = product.stock_quantity,
+                catalog_visibility = catalogVisibility,
                 meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
                             {
                                 new WooCommerceNET.WooCommerce.v2.ProductMeta()
@@ -657,7 +677,7 @@ namespace ANNwpsync.Controllers
 
                 #region Update hình trong nội dung sản phẩm
                 string productContent = wcProduct.description + "<h3>" + product.name + "</h3>";
-                wcProduct.images.RemoveAt(0);
+                // wcProduct.images.RemoveAt(0);
                 foreach (var item in wcProduct.images)
                 {
                     productContent += String.Format("<p><img src='/wp-content/uploads/{0}' alt='{1}' /></p>", System.IO.Path.GetFileName(item.src), product.name);
@@ -730,6 +750,72 @@ namespace ANNwpsync.Controllers
             #endregion
 
             return Ok(wcProductVariation);
+        }
+        #endregion
+        #region Post Product Clean Name
+        /// <summary>
+        /// Thực hiện post sản phẩm
+        /// </summary>
+        /// <param name="productID"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("product/{productID:int}/cleanname")]
+        public async Task<IActionResult> postProductCleanName(int productID)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+
+            var wcObject = checkHeader.wc.wcObject;
+            #endregion
+
+            #region Kiểm tra tồn tại sản phẩm trong data gốc
+            var product = _service.getProductByID(productID);
+
+            if (product == null)
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm" });
+            #endregion
+
+            #region Thực hiện post sản phẩm
+            try
+            {
+                //Add new product
+                Product newProduct = await _handleWCProduct(product, wcObject, checkHeader.priceType, checkHeader.domain, true);
+                Product wcProduct = await wcObject.Product.Add(newProduct);
+
+                #region Update hình trong nội dung sản phẩm
+                string productContent = wcProduct.description + "<h2>Giá sỉ " + product.CleanName + "</h2>";
+                // wcProduct.images.RemoveAt(0);
+                wcProduct.images = wcProduct.images.OrderByDescending(x => x.position).ToList();
+                foreach (var item in wcProduct.images)
+                {
+                    productContent += String.Format("<p><img src='/wp-content/uploads/{0}' alt='{1}' /></p>", System.IO.Path.GetFileName(item.src), product.CleanName);
+                }
+                var updateProduct = await wcObject.Product.Update(wcProduct.id.Value, new Product { description = productContent });
+                #endregion
+
+                #region Thực hiện post các biến thể nếu là sản phẩm biến thể
+                if (product.type == ProductType.Variable && wcProduct != null)
+                {
+                    var productVariationList = _service.getProductVariationByProductID(productID);
+                    foreach (var productVariation in productVariationList)
+                    {
+                        await _postWCVariation(productVariation, wcProduct, wcObject, checkHeader.priceType);
+                    }
+                }
+                #endregion
+
+                return Ok(wcProduct);
+            }
+            catch (WebException e)
+            {
+                var wcError = JsonConvert.DeserializeObject<WCErrorModel>(e.Message);
+
+                return StatusCode(StatusCodes.Status500InternalServerError, wcError);
+            }
+            #endregion
         }
         #endregion
         #region Get product
@@ -1062,7 +1148,7 @@ namespace ANNwpsync.Controllers
 
                 #region Update hình trong nội dung sản phẩm
                 string productContent = wcProduct.description + "<h3>" + product.name + "</h3>";
-                wcProduct.images.RemoveAt(0);
+                // wcProduct.images.RemoveAt(0);
                 foreach (var item in wcProduct.images)
                 {
                     productContent += String.Format("<p><img src='/wp-content/uploads/{0}' alt='{1}' /></p>", System.IO.Path.GetFileName(item.src), product.name);

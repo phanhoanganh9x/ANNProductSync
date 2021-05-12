@@ -46,5 +46,6 @@ namespace ANNwpsync.Models.SQLServer
         public string ShortDescription { get; set; }
         public Nullable<double> Price10 { get; set; }
         public Nullable<double> BestPrice { get; set; }
+        public string CleanName { get; set; }
     }
 }

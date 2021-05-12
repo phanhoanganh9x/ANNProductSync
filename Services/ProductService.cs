@@ -475,18 +475,17 @@ namespace ANNwpsync.Services
             using (var con = new SQLServerContext())
             {
                 // Lấy hình ảnh của sản phẩm cha
-                var imageProduct = con.tbl_Product
-                    .Where(x => x.ID == productID)
-                    .Where(x => !String.IsNullOrEmpty(x.ProductImage))
-                    .Select(x => new { image = x.ProductImage })
-                    .ToList();
+                //var imageProduct = con.tbl_Product
+                //    .Where(x => x.ID == productID)
+                //    .Where(x => !String.IsNullOrEmpty(x.ProductImage))
+                //    .Select(x => new { image = x.ProductImage })
+                //    .ToList();
                 // Lấy hình anh trong bảng image
                 var imageSource = con.tbl_ProductImage.Where(x => x.ProductID == productID)
                     .Select(x => new { image = x.ProductImage })
                     .ToList();
 
-                var images = imageProduct
-                    .Union(imageSource)
+                var images = imageSource
                     .Select(x => x.image)
                     .Distinct()
                     .ToList();
@@ -639,6 +638,7 @@ namespace ANNwpsync.Services
                             shortDescription = p.ShortDescription,
                             Price10 = p.Price10.HasValue ? p.Price10.Value : 0,
                             BestPrice = p.BestPrice.HasValue ? p.BestPrice.Value : 0,
+                            CleanName = p.CleanName
                         }
                     )
                     .OrderBy(x => x.id)
@@ -682,7 +682,8 @@ namespace ANNwpsync.Services
                             stock_quantity = parent.pro.productStyle == 1 ? (child != null ? child.quantity : 0) : 0,
                             short_description = parent.pro.shortDescription,
                             Price10 = parent.pro.Price10,
-                            BestPrice = parent.pro.BestPrice
+                            BestPrice = parent.pro.BestPrice,
+                            CleanName = parent.pro.CleanName
                         }
                     )
                     .OrderBy(o => o.id)
