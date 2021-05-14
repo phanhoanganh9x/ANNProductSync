@@ -492,33 +492,55 @@ namespace ANNwpsync.Controllers
             #endregion
 
             #region Image List
+            var strImages = new List<string>();
             var images = new List<ProductImage>();
+
             if (!String.IsNullOrEmpty(product.avatar))
-            {
-                images.Add(new ProductImage() { src = String.Format("http://hethongann.com/uploads/images/{0}", product.avatar), alt = product.name, position = 0 });
-            }
+                strImages.Add(product.avatar);
 
-            if (product.images.Count > 0)
-            {
-                product.images = product.images.Distinct().ToList();
+            if (product.images.Any())
+                strImages.AddRange(product.images);
 
-                if (!String.IsNullOrEmpty(product.avatar))
+            if (strImages.Any())
+            {
+                var index = 0;
+                images = strImages
+                    .Distinct()
+                    .Select(x =>
+                    {
+                        var item = new ProductImage()
+                        {
+                            src = $"http://hethongann.com/uploads/images/{x}",
+                            alt = product.name,
+                            position = index
+                        };
+
+                        ++index;
+
+                        return item;
+                    })
+                    .ToList();
+
+                // nếu post sản phẩm clean name thì đảo image
+                if (cleanName == true && images.Count > 1)
                 {
-                    var avatar = product.images.Where(x => x == product.avatar).FirstOrDefault();
-                    if (!String.IsNullOrEmpty(avatar))
-                        product.images.Remove(avatar);
-                }
+                    if (images.Count <= 2)
+                        images = images.OrderBy(x => x.position).ToList();
+                    else
+                    {
+                        images = images.Select(x =>
+                        {
+                            if (x.position == 0)
+                                x.position = 2;
+                            else if (x.position == 2)
+                                x.position = 0;
 
-                if (product.images.Count > 0)
-                {
-                    images.AddRange(product.images.Select(x => new ProductImage() { src = String.Format("http://hethongann.com/uploads/images/{0}", x), alt = product.name }).ToList());
+                            return x;
+                        })
+                        .OrderBy(x => x.position)
+                        .ToList();
+                    }
                 }
-
-            }
-            // nếu post sản phẩm clean name thì đảo image
-            if (cleanName == true && images.Count > 1)
-            {
-                images = images.OrderBy(x => x.position).ToList();
             }
             #endregion
 
