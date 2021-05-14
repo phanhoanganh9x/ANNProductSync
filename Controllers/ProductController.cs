@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using System.Web;
 using WooCommerceNET;
 using WooCommerceNET.WooCommerce.v3;
 
@@ -632,8 +633,8 @@ namespace ANNwpsync.Controllers
                 sku = productSKU,
                 regular_price = regular_price,
                 type = product.type,
-                description = productContent,
-                short_description = shortDescription,
+                description = HttpUtility.HtmlDecode(productContent),
+                short_description = HttpUtility.HtmlDecode(shortDescription),
                 categories = categories,
                 tags = tags,
                 images = images,
