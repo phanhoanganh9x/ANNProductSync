@@ -525,15 +525,17 @@ namespace ANNwpsync.Controllers
                 // nếu post sản phẩm clean name thì đảo image
                 if (cleanName == true && images.Count > 1)
                 {
-                    if (images.Count <= 3)
+                    if (images.Count <= 4)
+                    {
                         images = images.OrderBy(x => x.position).ToList();
+                    }
                     else
                     {
                         images = images.Select(x =>
                         {
                             if (x.position == 0)
-                                x.position = 3;
-                            else if (x.position == 3)
+                                x.position = 4;
+                            else if (x.position == 4)
                                 x.position = 0;
 
                             return x;
