@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using WooCommerceNET;
@@ -512,7 +513,7 @@ namespace ANNwpsync.Controllers
                         var item = new ProductImage()
                         {
                             src = $"http://hethongann.com/uploads/images/{x}",
-                            alt = product.name,
+                            alt = product.name + " - " + product.sku,
                             position = index
                         };
 
@@ -525,17 +526,101 @@ namespace ANNwpsync.Controllers
                 // nếu post sản phẩm clean name thì đảo image
                 if (cleanName == true && images.Count > 1)
                 {
-                    if (images.Count <= 4)
+                    if (images.Count == 2)
                     {
                         images = images.OrderBy(x => x.position).ToList();
                     }
-                    else
+                    else if (images.Count == 3)
+                    {
+                        images = images.Select(x =>
+                        {
+                            if (x.position == 0)
+                                x.position = 2;
+                            else if (x.position == 2)
+                                x.position = 0;
+
+                            return x;
+                        })
+                        .OrderBy(x => x.position)
+                        .ToList();
+                    }
+                    else if (images.Count == 4)
+                    {
+                        images = images.Select(x =>
+                        {
+                            if (x.position == 0)
+                                x.position = 3;
+                            else if (x.position == 3)
+                                x.position = 0;
+
+                            return x;
+                        })
+                        .OrderBy(x => x.position)
+                        .ToList();
+                    }
+                    else if (images.Count == 5)
                     {
                         images = images.Select(x =>
                         {
                             if (x.position == 0)
                                 x.position = 4;
                             else if (x.position == 4)
+                                x.position = 0;
+
+                            return x;
+                        })
+                        .OrderBy(x => x.position)
+                        .ToList();
+                    }
+                    else if (images.Count == 6)
+                    {
+                        images = images.Select(x =>
+                        {
+                            if (x.position == 0)
+                                x.position = 5;
+                            else if (x.position == 5)
+                                x.position = 0;
+
+                            return x;
+                        })
+                        .OrderBy(x => x.position)
+                        .ToList();
+                    }
+                    else if (images.Count == 7)
+                    {
+                        images = images.Select(x =>
+                        {
+                            if (x.position == 0)
+                                x.position = 6;
+                            else if (x.position == 6)
+                                x.position = 0;
+
+                            return x;
+                        })
+                        .OrderBy(x => x.position)
+                        .ToList();
+                    }
+                    else if (images.Count == 8)
+                    {
+                        images = images.Select(x =>
+                        {
+                            if (x.position == 0)
+                                x.position = 7;
+                            else if (x.position == 7)
+                                x.position = 0;
+
+                            return x;
+                        })
+                        .OrderBy(x => x.position)
+                        .ToList();
+                    }
+                    else
+                    {
+                        images = images.Select(x =>
+                        {
+                            if (x.position == 0)
+                                x.position = 8;
+                            else if (x.position == 8)
                                 x.position = 0;
 
                             return x;
@@ -590,7 +675,18 @@ namespace ANNwpsync.Controllers
             // xử lý name - SKU - visibility khi post sản phẩm clean name
             if (cleanName == true)
             {
-                productName = String.IsNullOrEmpty(product.CleanName) ? product.name : product.CleanName;
+                productName = product.name;
+
+                if (!String.IsNullOrEmpty(product.CleanName))
+                {
+                    productName = product.CleanName;
+
+                    if (product.sku.All(char.IsNumber))
+                    {
+                        productName = product.sku + " - " + product.CleanName;
+                    }
+                }
+                
                 productSKU = product.sku + "ANN";
                 catalogVisibility = "hidden";
             }
@@ -606,7 +702,7 @@ namespace ANNwpsync.Controllers
             {
                 foreach (var item in videoList)
                 {
-                    productContent += String.Format("<iframe width='560' height='315' src='https://www.youtube.com/embed/{0}?controls=0' title='{1}' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><br>", item.VideoId, product.name);
+                    productContent += String.Format("<iframe width='100%' height='360' src='https://www.youtube.com/embed/{0}?controls=0' title='{1}' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><br>", item.VideoId, product.name);
                 }
             }
 
@@ -616,6 +712,18 @@ namespace ANNwpsync.Controllers
             {
                 productContent += "Chất liệu " + product.materials + ".<br><br>";
                 shortDescription += "Chất liệu " + product.materials;
+            }
+            else
+            {
+                if (cleanName == true)
+                {
+                    shortDescription = "- Phân phối sỉ " + char.ToLower(product.name[0]) + product.name.Substring(1) + "<br>";
+                    shortDescription += product.short_description;
+                    //shortDescription = "<p>- Giá sỉ " + char.ToLower(product.name[0]) + product.name.Substring(1) + "</p>";
+                    //shortDescription += "<p>- <strong>Cam kết hàng chính hãng 100%</strong>.</p>";
+                    //shortDescription += "<p>- <strong>Thanh toán khi nhận hàng (COD)</strong>.</p>";
+                    //shortDescription += "<p>- <strong>Khách được kiểm tra hàng</strong>.</p>";
+                }
             }
 
             // Nếu post sản phẩm clean name thì lấy mô tả ngắn làm nội dung
@@ -989,7 +1097,7 @@ namespace ANNwpsync.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("product/updatePrice/{productID:int}")]
-        public async Task<IActionResult> updateRetailPrice(int productID)
+        public async Task<IActionResult> updatePrice(int productID)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
