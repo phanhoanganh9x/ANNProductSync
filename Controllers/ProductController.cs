@@ -1146,6 +1146,69 @@ namespace ANNwpsync.Controllers
             return Ok(updateProduct);
         }
         #endregion
+        #region Update Price Charme
+        /// <summary>
+        /// Thực hiện update SKU
+        /// </summary>
+        /// <param name="productID"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("product/updateCharme/{productID:int}")]
+        public async Task<IActionResult> updatePriceCharme(int productID)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+            var wcObject = checkHeader.wc.wcObject;
+            #endregion
+
+            #region Kiểm tra tồn tại sản phẩm trong data gốc
+            var product = _service.getProductByID(productID);
+            if (product == null)
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên hệ thống gốc" });
+            #endregion
+
+            #region Thực hiện get sản phẩm trên web bằng SKU cũ
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
+            if (wcProduct.Count == 0)
+            {
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
+            }
+            #endregion
+
+            string shortDescription = "<p><strong style='color: #ff0000;'>Kho Hàng Sỉ ANN là nhà phân phối nước hoa Charme chính hãng tại TPHCM.</strong></p>\r\n"; 
+            shortDescription += "<p><strong style='color: #008000;'>Liên hệ để nhận giá sỉ siêu chiết khấu!</strong></p>\r\n\r\n";
+            shortDescription += product.short_description;
+
+            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            var updateProduct = await wcObject.Product.Update(wcProductID, new Product
+            {
+                short_description = HttpUtility.HtmlDecode(shortDescription),
+                regular_price = Convert.ToDecimal(product.retailPrice),
+                meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
+                            {
+                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                {
+                                    key = "_retail_price",
+                                    value = product.retailPrice
+                                },
+                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                {
+                                    key = "_price10",
+                                    value = 0
+                                },
+                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                {
+                                    key = "_bestprice",
+                                    value = 0
+                                }
+                            }
+            });
+
+            return Ok(updateProduct);
+        }
+        #endregion
         #region Update Product Tag
         /// <summary>
         /// Thực hiện update SKU
