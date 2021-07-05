@@ -1146,7 +1146,7 @@ namespace ANNwpsync.Controllers
             return Ok(updateProduct);
         }
         #endregion
-        #region Update Price Charme
+        #region Update Charme
         /// <summary>
         /// Thực hiện update SKU
         /// </summary>
@@ -1177,8 +1177,8 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            string shortDescription = "<p><strong style='color: #ff0000;'>Kho Hàng Sỉ ANN là nhà phân phối nước hoa Charme chính hãng tại TPHCM.</strong></p>\r\n"; 
-            shortDescription += "<p><strong style='color: #008000;'>Liên hệ để nhận giá sỉ siêu chiết khấu!</strong></p>\r\n\r\n";
+            string shortDescription = "<p><strong style='color: #008000;'>Kho Sỉ Mỹ Phẩm ANN là Tổng phân phối mỹ phẩm Charme chính hãng tại TPHCM.</strong></p>\r\n"; 
+            shortDescription += "<p><strong style='color: #ff0000;'>Chúng tôi không công khai giá sỉ, vui lòng liên hệ để nhận giá sỉ siêu chiết khấu!</strong></p>\r\n\r\n";
             shortDescription += product.short_description;
 
             int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
