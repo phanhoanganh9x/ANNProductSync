@@ -32,5 +32,6 @@ namespace ANNwpsync.Models
         public double Price10 { get; set; }
         public double BestPrice { get; set; }
         public string CleanName { get; set; }
+        public string FeaturedImage { get; set; }
     }
 }

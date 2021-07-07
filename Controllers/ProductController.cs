@@ -434,7 +434,7 @@ namespace ANNwpsync.Controllers
         /// <param name="priceType"></param>
         /// <param name="domain"></param>
         /// <returns></returns>
-        private async Task<Product> _handleWCProduct(ProductModel product, WCObject wcObject, string priceType, string domain, bool cleanName = false)
+        private async Task<Product> _handleWCProduct(ProductModel product, WCObject wcObject, string priceType, string domain, bool cleanName = false, bool featuredImage = false)
         {
             #region Regular Price
             decimal? regular_price = null;
@@ -497,8 +497,15 @@ namespace ANNwpsync.Controllers
             var strImages = new List<string>();
             var images = new List<ProductImage>();
 
-            if (!String.IsNullOrEmpty(product.avatar))
-                strImages.Add(product.avatar);
+            if (featuredImage == true && !String.IsNullOrEmpty(product.FeaturedImage))
+            {
+                strImages.Add(product.FeaturedImage);
+            }
+            else
+            {
+                if (!String.IsNullOrEmpty(product.avatar))
+                    strImages.Add(product.avatar);
+            }
 
             if (product.images.Any())
                 strImages.AddRange(product.images);
@@ -951,6 +958,76 @@ namespace ANNwpsync.Controllers
             #endregion
         }
         #endregion
+        #region Post Product Featured Image
+        /// <summary>
+        /// Thực hiện post sản phẩm
+        /// </summary>
+        /// <param name="productID"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("product/{productID:int}/featuredimage")]
+        public async Task<IActionResult> postProductFeaturedImage(int productID)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+
+            var wcObject = checkHeader.wc.wcObject;
+            #endregion
+
+            #region Kiểm tra tồn tại sản phẩm trong data gốc
+            var product = _service.getProductByID(productID);
+
+            if (product == null)
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm" });
+            #endregion
+
+            #region Thực hiện post sản phẩm
+            try
+            {
+                //Add new product
+                Product newProduct = await _handleWCProduct(product, wcObject, checkHeader.priceType, checkHeader.domain, false, true);
+                if (!String.IsNullOrEmpty(product.CleanName))
+                {
+                    newProduct.name = product.CleanName;
+                }
+                Product wcProduct = await wcObject.Product.Add(newProduct);
+
+                #region Update hình trong nội dung sản phẩm
+                string productContent = wcProduct.description + "<h2>Nguồn sỉ " + product.name + "</h2>";
+
+                wcProduct.images = wcProduct.images.OrderByDescending(x => x.position).ToList();
+                foreach (var item in wcProduct.images)
+                {
+                    productContent += String.Format("<p><img src='/wp-content/uploads/{0}' alt='{1}' /></p>", System.IO.Path.GetFileName(item.src), product.CleanName);
+                }
+                var updateProduct = await wcObject.Product.Update(wcProduct.id.Value, new Product { description = productContent });
+                #endregion
+
+                #region Thực hiện post các biến thể nếu là sản phẩm biến thể
+                if (product.type == ProductType.Variable && wcProduct != null)
+                {
+                    var productVariationList = _service.getProductVariationByProductID(productID);
+                    foreach (var productVariation in productVariationList)
+                    {
+                        await _postWCVariation(productVariation, wcProduct, wcObject, checkHeader.priceType);
+                    }
+                }
+                #endregion
+
+                return Ok(wcProduct);
+            }
+            catch (WebException e)
+            {
+                var wcError = JsonConvert.DeserializeObject<WCErrorModel>(e.Message);
+
+                return StatusCode(StatusCodes.Status500InternalServerError, wcError);
+            }
+            #endregion
+        }
+        #endregion
         #region Get product
         /// <summary>
         /// Thực hiện get product
@@ -1146,15 +1223,15 @@ namespace ANNwpsync.Controllers
             return Ok(updateProduct);
         }
         #endregion
-        #region Update Charme
+        #region Update hidden wholesale price
         /// <summary>
         /// Thực hiện update SKU
         /// </summary>
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("product/updateCharme/{productID:int}")]
-        public async Task<IActionResult> updatePriceCharme(int productID)
+        [Route("product/hiddenWholesalePrice/{productID:int}")]
+        public async Task<IActionResult> hiddenWholesalePrice(int productID)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
@@ -1177,7 +1254,7 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            string shortDescription = "<p><strong style='color: #008000;'>Kho Sỉ Mỹ Phẩm ANN là Tổng phân phối mỹ phẩm Charme chính hãng tại TPHCM.</strong></p>\r\n"; 
+            string shortDescription = "<p><strong style='color: #008000;'>Kho Sỉ Mỹ Phẩm ANN là nhà phân phối mỹ phẩm chính hãng tại TPHCM.</strong></p>\r\n"; 
             shortDescription += "<p><strong style='color: #ff0000;'>Chúng tôi không công khai giá sỉ, vui lòng liên hệ để nhận giá sỉ siêu chiết khấu!</strong></p>\r\n\r\n";
             shortDescription += product.short_description;
 

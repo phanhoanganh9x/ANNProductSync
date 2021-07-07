@@ -638,7 +638,8 @@ namespace ANNwpsync.Services
                             shortDescription = p.ShortDescription,
                             Price10 = p.Price10.HasValue ? p.Price10.Value : 0,
                             BestPrice = p.BestPrice.HasValue ? p.BestPrice.Value : 0,
-                            CleanName = p.CleanName
+                            CleanName = p.CleanName,
+                            FeaturedImage = p.FeaturedImage
                         }
                     )
                     .OrderBy(x => x.id)
@@ -683,7 +684,8 @@ namespace ANNwpsync.Services
                             short_description = parent.pro.shortDescription,
                             Price10 = parent.pro.Price10,
                             BestPrice = parent.pro.BestPrice,
-                            CleanName = parent.pro.CleanName
+                            CleanName = parent.pro.CleanName,
+                            FeaturedImage = parent.pro.FeaturedImage
                         }
                     )
                     .OrderBy(o => o.id)
