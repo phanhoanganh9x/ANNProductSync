@@ -1230,8 +1230,8 @@ namespace ANNwpsync.Controllers
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("product/hiddenWholesalePrice/{productID:int}")]
-        public async Task<IActionResult> hiddenWholesalePrice(int productID)
+        [Route("product/toggleWholesalePrice/{productID:int}/{toggleProduct}")]
+        public async Task<IActionResult> toggleWholesalePrice(int productID, string toggleProduct)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
@@ -1254,31 +1254,43 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            string shortDescription = "<p><strong style='color: #008000;'>Kho Sỉ Mỹ Phẩm ANN là nhà phân phối mỹ phẩm chính hãng tại TPHCM.</strong></p>\r\n"; 
-            shortDescription += "<p><strong style='color: #ff0000;'>Chúng tôi không công khai giá sỉ, vui lòng liên hệ để nhận giá sỉ siêu chiết khấu!</strong></p>\r\n\r\n";
+            double regularPrice = product.regularPrice;
+            double retailPrice = product.retailPrice;
+            double price10 = product.Price10;
+            double bestPrice = product.BestPrice;
+            string shortDescription = "";
+
+            if (toggleProduct == "hide")
+            {
+                regularPrice = retailPrice;
+                price10 = retailPrice;
+                bestPrice = retailPrice;
+                shortDescription = "<p><strong style='color: #008000;'>Kho Sỉ Mỹ Phẩm ANN là nhà phân phối mỹ phẩm chính hãng tại TPHCM.</strong></p>\r\n";
+                shortDescription += "<p><strong style='color: #ff0000;'>Chúng tôi không công khai giá sỉ, vui lòng liên hệ để nhận giá sỉ siêu chiết khấu!</strong></p>\r\n\r\n";
+            }
             shortDescription += product.short_description;
 
             int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
             var updateProduct = await wcObject.Product.Update(wcProductID, new Product
             {
                 short_description = HttpUtility.HtmlDecode(shortDescription),
-                regular_price = Convert.ToDecimal(product.retailPrice),
+                regular_price = Convert.ToDecimal(regularPrice),
                 meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
                             {
                                 new WooCommerceNET.WooCommerce.v2.ProductMeta()
                                 {
                                     key = "_retail_price",
-                                    value = product.retailPrice
+                                    value = retailPrice
                                 },
                                 new WooCommerceNET.WooCommerce.v2.ProductMeta()
                                 {
                                     key = "_price10",
-                                    value = 0
+                                    value = price10
                                 },
                                 new WooCommerceNET.WooCommerce.v2.ProductMeta()
                                 {
                                     key = "_bestprice",
-                                    value = 0
+                                    value = bestPrice
                                 }
                             }
             });
