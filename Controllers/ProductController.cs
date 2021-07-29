@@ -434,7 +434,7 @@ namespace ANNwpsync.Controllers
         /// <param name="priceType"></param>
         /// <param name="domain"></param>
         /// <returns></returns>
-        private async Task<Product> _handleWCProduct(ProductModel product, WCObject wcObject, string priceType, string domain, bool cleanName = false, bool featuredImage = false)
+        private async Task<Product> _handleWCProduct(ProductModel product, WCObject wcObject, string priceType, string domain, bool cleanName = false, bool featuredImage = false, bool changeSKU = false, string catalogVisibility = "visible")
         {
             #region Regular Price
             decimal? regular_price = null;
@@ -531,111 +531,111 @@ namespace ANNwpsync.Controllers
                     .ToList();
 
                 // nếu post sản phẩm clean name thì đảo image
-                if (cleanName == true && images.Count > 1)
-                {
-                    if (images.Count == 2)
-                    {
-                        images = images.OrderBy(x => x.position).ToList();
-                    }
-                    else if (images.Count == 3)
-                    {
-                        images = images.Select(x =>
-                        {
-                            if (x.position == 0)
-                                x.position = 2;
-                            else if (x.position == 2)
-                                x.position = 0;
+                //if (cleanName == true && images.Count > 1)
+                //{
+                //    if (images.Count == 2)
+                //    {
+                //        images = images.OrderBy(x => x.position).ToList();
+                //    }
+                //    else if (images.Count == 3)
+                //    {
+                //        images = images.Select(x =>
+                //        {
+                //            if (x.position == 0)
+                //                x.position = 2;
+                //            else if (x.position == 2)
+                //                x.position = 0;
 
-                            return x;
-                        })
-                        .OrderBy(x => x.position)
-                        .ToList();
-                    }
-                    else if (images.Count == 4)
-                    {
-                        images = images.Select(x =>
-                        {
-                            if (x.position == 0)
-                                x.position = 3;
-                            else if (x.position == 3)
-                                x.position = 0;
+                //            return x;
+                //        })
+                //        .OrderBy(x => x.position)
+                //        .ToList();
+                //    }
+                //    else if (images.Count == 4)
+                //    {
+                //        images = images.Select(x =>
+                //        {
+                //            if (x.position == 0)
+                //                x.position = 3;
+                //            else if (x.position == 3)
+                //                x.position = 0;
 
-                            return x;
-                        })
-                        .OrderBy(x => x.position)
-                        .ToList();
-                    }
-                    else if (images.Count == 5)
-                    {
-                        images = images.Select(x =>
-                        {
-                            if (x.position == 0)
-                                x.position = 4;
-                            else if (x.position == 4)
-                                x.position = 0;
+                //            return x;
+                //        })
+                //        .OrderBy(x => x.position)
+                //        .ToList();
+                //    }
+                //    else if (images.Count == 5)
+                //    {
+                //        images = images.Select(x =>
+                //        {
+                //            if (x.position == 0)
+                //                x.position = 4;
+                //            else if (x.position == 4)
+                //                x.position = 0;
 
-                            return x;
-                        })
-                        .OrderBy(x => x.position)
-                        .ToList();
-                    }
-                    else if (images.Count == 6)
-                    {
-                        images = images.Select(x =>
-                        {
-                            if (x.position == 0)
-                                x.position = 5;
-                            else if (x.position == 5)
-                                x.position = 0;
+                //            return x;
+                //        })
+                //        .OrderBy(x => x.position)
+                //        .ToList();
+                //    }
+                //    else if (images.Count == 6)
+                //    {
+                //        images = images.Select(x =>
+                //        {
+                //            if (x.position == 0)
+                //                x.position = 5;
+                //            else if (x.position == 5)
+                //                x.position = 0;
 
-                            return x;
-                        })
-                        .OrderBy(x => x.position)
-                        .ToList();
-                    }
-                    else if (images.Count == 7)
-                    {
-                        images = images.Select(x =>
-                        {
-                            if (x.position == 0)
-                                x.position = 6;
-                            else if (x.position == 6)
-                                x.position = 0;
+                //            return x;
+                //        })
+                //        .OrderBy(x => x.position)
+                //        .ToList();
+                //    }
+                //    else if (images.Count == 7)
+                //    {
+                //        images = images.Select(x =>
+                //        {
+                //            if (x.position == 0)
+                //                x.position = 6;
+                //            else if (x.position == 6)
+                //                x.position = 0;
 
-                            return x;
-                        })
-                        .OrderBy(x => x.position)
-                        .ToList();
-                    }
-                    else if (images.Count == 8)
-                    {
-                        images = images.Select(x =>
-                        {
-                            if (x.position == 0)
-                                x.position = 7;
-                            else if (x.position == 7)
-                                x.position = 0;
+                //            return x;
+                //        })
+                //        .OrderBy(x => x.position)
+                //        .ToList();
+                //    }
+                //    else if (images.Count == 8)
+                //    {
+                //        images = images.Select(x =>
+                //        {
+                //            if (x.position == 0)
+                //                x.position = 7;
+                //            else if (x.position == 7)
+                //                x.position = 0;
 
-                            return x;
-                        })
-                        .OrderBy(x => x.position)
-                        .ToList();
-                    }
-                    else
-                    {
-                        images = images.Select(x =>
-                        {
-                            if (x.position == 0)
-                                x.position = 8;
-                            else if (x.position == 8)
-                                x.position = 0;
+                //            return x;
+                //        })
+                //        .OrderBy(x => x.position)
+                //        .ToList();
+                //    }
+                //    else
+                //    {
+                //        images = images.Select(x =>
+                //        {
+                //            if (x.position == 0)
+                //                x.position = 8;
+                //            else if (x.position == 8)
+                //                x.position = 0;
 
-                            return x;
-                        })
-                        .OrderBy(x => x.position)
-                        .ToList();
-                    }
-                }
+                //            return x;
+                //        })
+                //        .OrderBy(x => x.position)
+                //        .ToList();
+                //    }
+                //}
             }
             #endregion
 
@@ -677,8 +677,7 @@ namespace ANNwpsync.Controllers
 
             #region Product Name & SKU & catalog_visibility
             string productName = _renameProduct(domain, product.id, product.name);
-            string productSKU = product.sku;
-            string catalogVisibility = "visible";
+            
             // xử lý name - SKU - visibility khi post sản phẩm clean name
             if (cleanName == true)
             {
@@ -688,14 +687,17 @@ namespace ANNwpsync.Controllers
                 {
                     productName = product.CleanName;
 
-                    if (product.sku.All(char.IsNumber))
-                    {
-                        productName = product.sku + " - " + product.CleanName;
-                    }
+                    //if (product.sku.All(char.IsNumber))
+                    //{
+                    //    productName = product.sku + " - " + product.CleanName;
+                    //}
                 }
-                
+            }
+
+            string productSKU = product.sku;
+            if (changeSKU == true)
+            {
                 productSKU = product.sku + "ANN";
-                catalogVisibility = "hidden";
             }
             #endregion
 
@@ -807,12 +809,33 @@ namespace ANNwpsync.Controllers
             if (product == null)
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm" });
             #endregion
-
+            if (checkHeader.domain == "nguonmypham.com")
+            {
+                if (String.IsNullOrEmpty(product.FeaturedImage))
+                {
+                    return BadRequest(new ResponseModel() { success = false, message = "Không có hình ảnh đặc trưng" });
+                }
+                if (String.IsNullOrEmpty(product.CleanName))
+                {
+                    return BadRequest(new ResponseModel() { success = false, message = "Không có tên sản phẩm 2" });
+                }
+            }
             #region Thực hiện post sản phẩm
             try
             {
                 //Add new product
-                Product newProduct = await _handleWCProduct(product, wcObject, checkHeader.priceType, checkHeader.domain);
+                bool featuredImage = false;
+                bool CleanName = false;
+                bool changeSKU = false;
+                string catalogVisibility = "visible";
+                if (checkHeader.domain == "nguonmypham.com")
+                {
+                    featuredImage = true;
+                    CleanName = true;
+                }
+
+                Product newProduct = await _handleWCProduct(product, wcObject, checkHeader.priceType, checkHeader.domain, CleanName, featuredImage, changeSKU, catalogVisibility);
+                
                 Product wcProduct = await wcObject.Product.Add(newProduct);
 
                 #region Update hình trong nội dung sản phẩm
@@ -958,15 +981,15 @@ namespace ANNwpsync.Controllers
             #endregion
         }
         #endregion
-        #region Post Product Featured Image
+        #region Post Product 2
         /// <summary>
         /// Thực hiện post sản phẩm
         /// </summary>
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("product/{productID:int}/featuredimage")]
-        public async Task<IActionResult> postProductFeaturedImage(int productID)
+        [Route("product/{productID:int}/post-2")]
+        public async Task<IActionResult> postProduct2(int productID)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
@@ -983,20 +1006,36 @@ namespace ANNwpsync.Controllers
             if (product == null)
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm" });
             #endregion
-
+            if (checkHeader.domain != "nguonmypham.com")
+            {
+                if (String.IsNullOrEmpty(product.FeaturedImage))
+                {
+                    return BadRequest(new ResponseModel() { success = false, message = "Không có hình ảnh đặc trưng" });
+                }
+                if (String.IsNullOrEmpty(product.CleanName))
+                {
+                    return BadRequest(new ResponseModel() { success = false, message = "Không có tên sản phẩm 2" });
+                }
+            }
             #region Thực hiện post sản phẩm
             try
             {
                 //Add new product
-                Product newProduct = await _handleWCProduct(product, wcObject, checkHeader.priceType, checkHeader.domain, false, true);
-                if (!String.IsNullOrEmpty(product.CleanName))
+                bool featuredImage = true;
+                bool CleanName = true;
+                bool changeSKU = true;
+                string catalogVisibility = "hidden";
+                if (checkHeader.domain == "nguonmypham.com")
                 {
-                    newProduct.name = product.CleanName;
+                    featuredImage = false;
+                    CleanName = false;
                 }
+
+                Product newProduct = await _handleWCProduct(product, wcObject, checkHeader.priceType, checkHeader.domain, CleanName, featuredImage, changeSKU, catalogVisibility);
                 Product wcProduct = await wcObject.Product.Add(newProduct);
 
                 #region Update hình trong nội dung sản phẩm
-                string productContent = wcProduct.description + "<h2>Nguồn sỉ " + product.name + "</h2>";
+                string productContent = wcProduct.description + "<h2>Tổng phân phối " + product.name + "</h2>";
 
                 wcProduct.images = wcProduct.images.OrderByDescending(x => x.position).ToList();
                 foreach (var item in wcProduct.images)
@@ -1173,8 +1212,8 @@ namespace ANNwpsync.Controllers
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("product/updatePrice/{productID:int}")]
-        public async Task<IActionResult> updatePrice(int productID)
+        [Route("product/updatePrice/{productID:int}/{addSKU}")]
+        public async Task<IActionResult> updatePrice(int productID, string addSKU)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
@@ -1188,9 +1227,8 @@ namespace ANNwpsync.Controllers
             if (product == null)
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên hệ thống gốc" });
             #endregion
-
-            #region Thực hiện get sản phẩm trên web bằng SKU cũ
-            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
+            #region Thực hiện get sản phẩm trên web bằng SKU
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku + (addSKU != "null" ? addSKU : "") } });
             if (wcProduct.Count == 0)
             {
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
@@ -1230,8 +1268,8 @@ namespace ANNwpsync.Controllers
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("product/toggleWholesalePrice/{productID:int}/{toggleProduct}")]
-        public async Task<IActionResult> toggleWholesalePrice(int productID, string toggleProduct)
+        [Route("product/toggleWholesalePrice/{productID:int}/{toggleProduct}/{addSKU}")]
+        public async Task<IActionResult> toggleWholesalePrice(int productID, string toggleProduct, string addSKU)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
@@ -1247,7 +1285,7 @@ namespace ANNwpsync.Controllers
             #endregion
 
             #region Thực hiện get sản phẩm trên web bằng SKU cũ
-            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku + (addSKU != "null" ? addSKU : "") } });
             if (wcProduct.Count == 0)
             {
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
