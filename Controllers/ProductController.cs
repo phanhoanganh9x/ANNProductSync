@@ -186,7 +186,7 @@ namespace ANNwpsync.Controllers
                             addBefore = "Buôn sỉ";
                             break;
                         case "5":
-                            addBefore = "Xưởng chuyên sỉ";
+                            addBefore = "Shop chuyên sỉ";
                             break;
                         case "7":
                             addBefore = "Kho sỉ";
@@ -224,7 +224,7 @@ namespace ANNwpsync.Controllers
                     switch (ID)
                     {
                         case "1":
-                            addBefore = "Xưởng sỉ";
+                            addBefore = "Kho chuyên sỉ";
                             break;
                         case "3":
                             addBefore = "Top 1 kho sỉ";
@@ -252,13 +252,13 @@ namespace ANNwpsync.Controllers
                             addBefore = "Kho sỉ";
                             break;
                         case "6":
-                            addBefore = "Xưởng bỏ sỉ";
+                            addBefore = "Phân phối sỉ";
                             break;
                         case "9":
                             addBefore = "Giá sỉ";
                             break;
                         case "8":
-                            addBefore = "Muốn lấy sỉ";
+                            addBefore = "Shop sỉ";
                             break;
                         default:
                             break;
@@ -274,7 +274,7 @@ namespace ANNwpsync.Controllers
                             addBefore = "Giá sỉ";
                             break;
                         case "4":
-                            addBefore = "Nguồn hàng sỉ";
+                            addBefore = "Nguồn sỉ";
                             break;
                         case "6":
                             addBefore = "Kho sỉ";
@@ -290,7 +290,7 @@ namespace ANNwpsync.Controllers
                     switch (ID)
                     {
                         case "1":
-                            addBefore = "Xưởng sỉ";
+                            addBefore = "Bỏ sỉ";
                             break;
                         case "3":
                             addBefore = "Shop sỉ";
@@ -315,10 +315,10 @@ namespace ANNwpsync.Controllers
                             addBefore = "Nguồn sỉ";
                             break;
                         case "2":
-                            addBefore = "Xưởng sỉ";
+                            addBefore = "Kho sỉ";
                             break;
                         case "4":
-                            addBefore = "Chợ sỉ";
+                            addBefore = "Mua sỉ";
                             break;
                         case "6":
                             addBefore = "Giá sỉ";
@@ -356,7 +356,7 @@ namespace ANNwpsync.Controllers
                     switch (ID)
                     {
                         case "0":
-                            addBefore = "Kho sỉ";
+                            addBefore = "Shop sỉ";
                             break;
                         case "2":
                             addBefore = "Xưởng sỉ";
@@ -378,19 +378,19 @@ namespace ANNwpsync.Controllers
                     switch (ID)
                     {
                         case "0":
-                            addBefore = "Bán sỉ";
+                            addBefore = "Kho sỉ";
                             break;
                         case "1":
                             addBefore = "Nhập sỉ";
                             break;
                         case "4":
-                            addBefore = "Xưởng sỉ";
+                            addBefore = "Chuyên sỉ";
                             break;
                         case "5":
-                            addBefore = "Nguồn hàng";
+                            addBefore = "Nguồn sỉ";
                             break;
                         case "7":
-                            addBefore = "Shop sỉ";
+                            addBefore = "Bỏ sỉ";
                             break;
                         default:
                             break;
@@ -400,16 +400,55 @@ namespace ANNwpsync.Controllers
                     switch (ID)
                     {
                         case "0":
-                            addBefore = "Review";
+                            addBefore = "Đánh giá";
                             break;
                         case "1":
-                            addBefore = "Giá sỉ";
+                            addBefore = "Bảng giá sỉ";
                             break;
                         case "4":
                             addBefore = "Phân phối";
                             break;
                         case "7":
-                            addBefore = "Tổng phân phối";
+                            addBefore = "Sỉ";
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case "khosimypham.com":
+                    switch (ID)
+                    {
+                        case "2":
+                            addBefore = "Kho sỉ";
+                            break;
+                        case "3":
+                            addBefore = "Giá sỉ";
+                            break;
+                        case "8":
+                            addBefore = "Sỉ";
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case "nguonmypham.com":
+                    switch (ID)
+                    {
+                        case "9":
+                            addBefore = "Nguồn sỉ";
+                            break;
+                        case "6":
+                            addBefore = "Giá sỉ";
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case "myphamann.vn":
+                    switch (ID)
+                    {
+                        case "5":
+                            addBefore = "Phân phối sỉ";
                             break;
                         default:
                             break;
@@ -716,7 +755,7 @@ namespace ANNwpsync.Controllers
             }
 
             // Materials
-            string[] noMaterials = { "my-pham", "kem-face", "kem-body", "serum", "tam-trang", "sua-tam", "sua-rua-mat", "dau-goi-dau", "son-moi", "kem-chong-nang", "my-pham-tong-hop", "dung-dich-ve-sinh", "mat-na-duong-da", "nuoc-hoa", "nuoc-hoa-charme", "nuoc-hoa-noi-dia-trung", "nuoc-hoa-vung-kin", "nuoc-hoa-mini", "nuoc-hoa-full-size", "bao-li-xi-tet", "thuc-pham-chuc-nang", "tong-hop" };
+            string[] noMaterials = { "my-pham", "kem-face", "kem-body", "serum", "tam-trang", "sua-tam", "sua-rua-mat", "dau-goi-dau", "son-moi", "kem-chong-nang", "my-pham-tong-hop", "dung-dich-ve-sinh", "mat-na-duong-da", "nuoc-hoa", "nuoc-hoa-charme", "nuoc-hoa-noi-dia-trung", "nuoc-hoa-vung-kin", "nuoc-hoa-mini", "nuoc-hoa-full-size", "bao-li-xi-tet", "thuc-pham-chuc-nang", "tong-hop", "nuoc-tay-trang" };
             if (!noMaterials.Contains(product.categorySlug))
             {
                 productContent += "Chất liệu " + product.materials + ".<br><br>";
@@ -726,7 +765,7 @@ namespace ANNwpsync.Controllers
             {
                 if (cleanName == true)
                 {
-                    shortDescription = "- Phân phối sỉ " + char.ToLower(product.name[0]) + product.name.Substring(1) + "<br>";
+                    shortDescription = "- Phân phối " + char.ToLower(product.name[0]) + product.name.Substring(1) + "<br>";
                     shortDescription += product.short_description;
                     //shortDescription = "<p>- Giá sỉ " + char.ToLower(product.name[0]) + product.name.Substring(1) + "</p>";
                     //shortDescription += "<p>- <strong>Cam kết hàng chính hãng 100%</strong>.</p>";
@@ -838,15 +877,19 @@ namespace ANNwpsync.Controllers
                 
                 Product wcProduct = await wcObject.Product.Add(newProduct);
 
-                #region Update hình trong nội dung sản phẩm
-                string productContent = wcProduct.description + "<h3>" + product.name + "</h3>";
-                // wcProduct.images.RemoveAt(0);
-                foreach (var item in wcProduct.images)
+                if (checkHeader.domain != "myphamann.vn")
                 {
-                    productContent += String.Format("<p><img src='/wp-content/uploads/{0}' alt='{1}' /></p>", System.IO.Path.GetFileName(item.src), product.name);
+                    #region Update hình trong nội dung sản phẩm
+                    string productContent = wcProduct.description + "<h3>" + product.name + "</h3>";
+                    // wcProduct.images.RemoveAt(0);
+                    foreach (var item in wcProduct.images)
+                    {
+                        productContent += String.Format("<p><img src='/wp-content/uploads/{0}' alt='{1}' /></p>", System.IO.Path.GetFileName(item.src), product.name);
+                    }
+                    var updateProduct = await wcObject.Product.Update(wcProduct.id.Value, new Product { description = productContent });
+                    #endregion
                 }
-                var updateProduct = await wcObject.Product.Update(wcProduct.id.Value, new Product { description = productContent });
-                #endregion
+
 
                 #region Thực hiện post các biến thể nếu là sản phẩm biến thể
                 if (product.type == ProductType.Variable && wcProduct != null)
