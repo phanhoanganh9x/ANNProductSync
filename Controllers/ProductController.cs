@@ -1336,6 +1336,106 @@ namespace ANNwpsync.Controllers
             return Ok(updateProduct);
         }
         #endregion
+        #region Update hidden price type
+        /// <summary>
+        /// Thực hiện update SKU
+        /// </summary>
+        /// <param name="productID"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("product/togglePrice/{productID:int}/{toggleProduct}/{priceType}/{addSKU}")]
+        public async Task<IActionResult> togglePrice(int productID, string toggleProduct, string priceType, string addSKU)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+            var wcObject = checkHeader.wc.wcObject;
+            #endregion
+
+            #region Kiểm tra tồn tại sản phẩm trong data gốc
+            var product = _service.getProductByID(productID);
+            if (product == null)
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên hệ thống gốc" });
+            #endregion
+
+            #region Thực hiện get sản phẩm trên web bằng SKU cũ
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku + (addSKU != "null" ? addSKU : "") } });
+            if (wcProduct.Count == 0)
+            {
+                return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
+            }
+            #endregion
+
+            double regularPrice = product.regularPrice;
+            double retailPrice = product.retailPrice;
+            double price10 = product.Price10;
+            double bestPrice = product.BestPrice;
+
+            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+
+            if (priceType == "WholesalePrice")
+            {
+                var updateProduct = await wcObject.Product.Update(wcProductID, new Product
+                {
+                    regular_price = Convert.ToDecimal(toggleProduct == "hide" ? retailPrice : regularPrice)
+                });
+                return Ok(updateProduct);
+            }
+
+            if (priceType == "RetailPrice")
+            {
+                var updateProduct = await wcObject.Product.Update(wcProductID, new Product
+                {
+                    meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
+                            {
+                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                {
+                                    key = "_retail_price",
+                                    value = Convert.ToDecimal(toggleProduct == "hide" ? 0 : retailPrice)
+                                }
+                            }
+                });
+                return Ok(updateProduct);
+            }
+
+            if (priceType == "Price10")
+            {
+                var updateProduct = await wcObject.Product.Update(wcProductID, new Product
+                {
+                    meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
+                            {
+                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                {
+                                    key = "_price10",
+                                    value = Convert.ToDecimal(toggleProduct == "hide" ? 0 : price10)
+                                }
+                            }
+                });
+                return Ok(updateProduct);
+            }
+
+            if (priceType == "BestPrice")
+            {
+                var updateProduct = await wcObject.Product.Update(wcProductID, new Product
+                {
+                    regular_price = Convert.ToDecimal(regularPrice),
+                    meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
+                            {
+                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                {
+                                    key = "_bestprice",
+                                    value = Convert.ToDecimal(toggleProduct == "hide" ? 0 : bestPrice)
+                                }
+                            }
+                });
+                return Ok(updateProduct);
+            }
+
+            return null;
+            
+        }
+        #endregion
         #region Update Product Tag
         /// <summary>
         /// Thực hiện update SKU
