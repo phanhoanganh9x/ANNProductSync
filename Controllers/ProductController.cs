@@ -715,7 +715,7 @@ namespace ANNwpsync.Controllers
             #endregion
 
             #region Product Name & SKU & catalog_visibility
-            string productName = _renameProduct(domain, product.id, product.name);
+            string productName = _renameProduct(domain, product.id, (domain == "myphamann.vn") ? product.CleanName : product.name);
             
             // xử lý name - SKU - visibility khi post sản phẩm clean name
             if (cleanName == true)
