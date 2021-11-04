@@ -481,22 +481,22 @@ namespace ANNwpsync.Services
                 //    .Select(x => new { image = x.ProductImage })
                 //    .ToList();
                 // Lấy hình anh trong bảng image
-                var imageSource = con.tbl_ProductImage.Where(x => x.ProductID == productID)
+                var images = con.tbl_ProductImage.Where(x => x.ProductID == productID)
                     .Select(x => new { image = x.ProductImage })
                     .ToList();
 
-                var images = imageSource
-                    .Select(x => x.image)
-                    .Distinct()
-                    .ToList();
+                //var images = imageSource
+                //    .Select(x => x.image)
+                //    .Distinct()
+                //    .ToList();
 
                 if (images.Count == 0)
                 {
-                    return new List<string>() { String.Empty };
+                    return new List<string>();
                 }
                 else
                 {
-                    return images.Select(x => x).ToList();
+                    return images.Select(x => x.image).ToList();
                 }
             }
         }
