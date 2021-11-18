@@ -1510,8 +1510,8 @@ namespace ANNwpsync.Controllers
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("product/updateProductCategory/{productID:int}")]
-        public async Task<IActionResult> updateProductCategory(int productID)
+        [Route("product/updateProductCategory/{productID:int}/{addSKU}")]
+        public async Task<IActionResult> updateProductCategory(int productID, string addSKU)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
@@ -1527,7 +1527,7 @@ namespace ANNwpsync.Controllers
             #endregion
 
             #region Thực hiện get sản phẩm trên web bằng SKU cũ
-            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku + (addSKU != "null" ? addSKU : "") } });
             if (wcProduct.Count == 0)
             {
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
