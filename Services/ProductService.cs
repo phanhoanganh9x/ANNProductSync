@@ -475,29 +475,28 @@ namespace ANNwpsync.Services
             using (var con = new SQLServerContext())
             {
                 // Lấy hình ảnh của sản phẩm cha
-                var imageProduct = con.tbl_Product
-                    .Where(x => x.ID == productID)
-                    .Where(x => !String.IsNullOrEmpty(x.ProductImage))
-                    .Select(x => new { image = x.ProductImage })
-                    .ToList();
+                //var imageProduct = con.tbl_Product
+                //    .Where(x => x.ID == productID)
+                //    .Where(x => !String.IsNullOrEmpty(x.ProductImage))
+                //    .Select(x => new { image = x.ProductImage })
+                //    .ToList();
                 // Lấy hình anh trong bảng image
-                var imageSource = con.tbl_ProductImage.Where(x => x.ProductID == productID)
+                var images = con.tbl_ProductImage.Where(x => x.ProductID == productID)
                     .Select(x => new { image = x.ProductImage })
                     .ToList();
 
-                var images = imageProduct
-                    .Union(imageSource)
-                    .Select(x => x.image)
-                    .Distinct()
-                    .ToList();
+                //var images = imageSource
+                //    .Select(x => x.image)
+                //    .Distinct()
+                //    .ToList();
 
                 if (images.Count == 0)
                 {
-                    return new List<string>() { String.Empty };
+                    return new List<string>();
                 }
                 else
                 {
-                    return images.Select(x => x).ToList();
+                    return images.Select(x => x.image).ToList();
                 }
             }
         }
@@ -636,7 +635,11 @@ namespace ANNwpsync.Services
                             slug = p.Slug,
                             preOrder = p.PreOrder,
                             productStyle = p.ProductStyle.HasValue ? p.ProductStyle.Value : 1,
-                            shortDescription = p.ShortDescription
+                            shortDescription = p.ShortDescription,
+                            Price10 = p.Price10.HasValue ? p.Price10.Value : 0,
+                            BestPrice = p.BestPrice.HasValue ? p.BestPrice.Value : 0,
+                            CleanName = p.CleanName,
+                            FeaturedImage = p.FeaturedImage
                         }
                     )
                     .OrderBy(x => x.id)
@@ -678,7 +681,11 @@ namespace ANNwpsync.Services
                             type = parent.pro.productStyle == 1 ? "simple" : "variable",
                             manage_stock = parent.pro.productStyle == 1 ? true : false,
                             stock_quantity = parent.pro.productStyle == 1 ? (child != null ? child.quantity : 0) : 0,
-                            short_description = parent.pro.shortDescription
+                            short_description = parent.pro.shortDescription,
+                            Price10 = parent.pro.Price10,
+                            BestPrice = parent.pro.BestPrice,
+                            CleanName = parent.pro.CleanName,
+                            FeaturedImage = parent.pro.FeaturedImage
                         }
                     )
                     .OrderBy(o => o.id)

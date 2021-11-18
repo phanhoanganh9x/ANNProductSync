@@ -29,5 +29,9 @@ namespace ANNwpsync.Models
         public bool manage_stock { get; set; }
         public int? stock_quantity { get; set; }
         public string short_description { get; set; }
+        public double Price10 { get; set; }
+        public double BestPrice { get; set; }
+        public string CleanName { get; set; }
+        public string FeaturedImage { get; set; }
     }
 }
