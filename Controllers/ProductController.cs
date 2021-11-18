@@ -119,7 +119,7 @@ namespace ANNwpsync.Controllers
                 var wcImageID = wcProduct.images.Where(x => x.name == productVariation.image).Select(x => x.id).FirstOrDefault();
 
                 if (wcImageID.HasValue)
-                    image.id = Convert.ToInt32(wcImageID);
+                    image.id = Convert.ToUInt32(wcImageID);
                 else
                     image.src = String.Format("http://hethongann.com/uploads/images/{0}", productVariation.image);
 
@@ -728,6 +728,30 @@ namespace ANNwpsync.Controllers
 
             #region Thực hiện get sản phẩm trên web
             var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
+            #endregion
+
+            return Ok(wcProduct);
+        }
+        #endregion
+        #region Get product by SKU
+        /// <summary>
+        /// Thực hiện get product by SKU
+        /// </summary>
+        /// <param name="SKU"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("product/{SKU}")]
+        public async Task<IActionResult> getProduct(string SKU)
+        {
+            #region Kiểm tra điều kiện header request
+            var checkHeader = _checkHeaderRequest(Request.Headers);
+            if (!checkHeader.success)
+                return StatusCode(checkHeader.statusCode, checkHeader.message);
+            var wcObject = checkHeader.wc.wcObject;
+            #endregion
+
+            #region Thực hiện get sản phẩm trên web
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", SKU } });
             #endregion
 
             return Ok(wcProduct);
