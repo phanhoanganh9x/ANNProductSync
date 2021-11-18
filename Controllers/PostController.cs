@@ -101,7 +101,7 @@ namespace ANNwpsync.Controllers
                 { "per_page", "100" } });
             if (wpPostCategory.Count > 0)
             {
-                int wpPostCategoryID = wpPostCategory.Where(x => x.name == postClone.CategoryName).Select(x => x.id).FirstOrDefault();
+                int wpPostCategoryID = Convert.ToInt32(wpPostCategory.Where(x => x.name == postClone.CategoryName).Select(x => x.id).FirstOrDefault());
                 if (wpPostCategoryID > 0)
                 {
                     categories.Add(wpPostCategoryID);
@@ -115,7 +115,7 @@ namespace ANNwpsync.Controllers
                         parent = 0,
                     };
                     var createCategory = await wpObject.Categories.Add(newCategory);
-                    categories.Add(createCategory.id);
+                    categories.Add(Convert.ToInt32(createCategory.id));
                 }
             }
             #endregion
@@ -130,7 +130,7 @@ namespace ANNwpsync.Controllers
                 if (System.IO.File.Exists(filePath))
                 {
                     wpPostThumbnail = await wpObject.Media.Add(thumbnailFileName, filePath);
-                    featured_media = wpPostThumbnail.id;
+                    featured_media = (int)wpPostThumbnail.id;
                 }
             }
             #endregion
@@ -243,7 +243,7 @@ namespace ANNwpsync.Controllers
                 Posts newPost = await _handleWPPost(postClone, wpObject, checkHeader.domain, checkHeader.rootPath);
                 Posts createPost = await wpObject.Post.Add(newPost);
 
-                postClone.PostWebID = createPost.id;
+                postClone.PostWebID = (int)createPost.id;
                 _service.Update(postClone);
 
                 return Ok(createPost);
@@ -290,7 +290,7 @@ namespace ANNwpsync.Controllers
             #endregion
 
             string newTime = DateTime.Now.AddHours(-8).ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss");
-            var updatePost = await wpObject.Post.Update(wpPost.id, new Posts { date_gmt = newTime, modified_gmt = newTime });
+            var updatePost = await wpObject.Post.Update((int)wpPost.id, new Posts { date_gmt = newTime, modified_gmt = newTime });
 
             return Ok(updatePost);
         }
@@ -332,7 +332,7 @@ namespace ANNwpsync.Controllers
             {
                 Posts editedPost = await _handleWPPost(postClone, wpObject, checkHeader.domain, checkHeader.rootPath);
                 editedPost.modified_gmt = DateTime.Now.AddHours(-8).ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss");
-                Posts updatePost = await wpObject.Post.Update(wpPost.id, editedPost);
+                Posts updatePost = await wpObject.Post.Update((int)wpPost.id, editedPost);
 
                 return Ok(updatePost);
             }
@@ -377,7 +377,7 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            await wpObject.Post.Delete(wpPost.id, true);
+            await wpObject.Post.Delete((int)wpPost.id, true);
             postClone.PostWebID = 0;
             _service.Update(postClone);
 

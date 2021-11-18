@@ -134,7 +134,7 @@ namespace ANNwpsync.Controllers
             if (!String.IsNullOrEmpty(productVariation.color))
             {
                 var color = await _getWCAttribute(wcObject, "Màu");
-                int colorID = color != null ? color.id.Value : 1;
+                uint colorID = color != null ? color.id.Value : 1;
                 attributes.Add(new VariationAttribute()
                 {
                     id = colorID,
@@ -145,7 +145,7 @@ namespace ANNwpsync.Controllers
             if (!String.IsNullOrEmpty(productVariation.size))
             {
                 var size = await _getWCAttribute(wcObject, "Size");
-                int sizeID = size != null ? size.id.Value : 2;
+                uint sizeID = size != null ? size.id.Value : 2;
                 attributes.Add(new VariationAttribute()
                 {
                     id = sizeID,
@@ -163,7 +163,7 @@ namespace ANNwpsync.Controllers
                 image = image,
                 attributes = attributes
             },
-            wcProduct.id.Value);
+            (int)wcProduct.id.Value);
 
             return wcProductVariation;
         }
@@ -508,7 +508,7 @@ namespace ANNwpsync.Controllers
                 if (product.colors.Count > 0)
                 {
                     var color = await _getWCAttribute(wcObject, "Màu");
-                    int colorID = color != null ? color.id.Value : 1;
+                    uint colorID = color != null ? color.id.Value : 1;
 
                     attributes.Add(new ProductAttributeLine()
                     {
@@ -523,7 +523,7 @@ namespace ANNwpsync.Controllers
                 if (product.sizes.Count > 0)
                 {
                     var size = await _getWCAttribute(wcObject, "Size");
-                    int sizeID = size != null ? size.id.Value : 1;
+                    uint sizeID = size != null ? size.id.Value : 1;
 
                     attributes.Add(new ProductAttributeLine()
                     {
@@ -633,7 +633,7 @@ namespace ANNwpsync.Controllers
                 {
                     productContent += String.Format("<p><img src='/wp-content/uploads/{0}' alt='{1}' /></p>", System.IO.Path.GetFileName(item.src), product.name);
                 }
-                var updateProduct = await wcObject.Product.Update(wcProduct.id.Value, new Product { description = productContent });
+                var updateProduct = await wcObject.Product.Update((int)wcProduct.id.Value, new Product { description = productContent });
                 #endregion
 
                 #region Thực hiện post các biến thể nếu là sản phẩm biến thể
@@ -788,9 +788,9 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            uint wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
             DateTime newTime = DateTime.Now.AddHours(-8);
-            var updateProduct = await wcObject.Product.Update(wcProductID, new Product { date_created_gmt = newTime, date_modified_gmt = newTime });
+            var updateProduct = await wcObject.Product.Update((int)wcProductID, new Product { date_created_gmt = newTime, date_modified_gmt = newTime });
 
             return Ok(updateProduct);
         }
@@ -827,8 +827,8 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            var updateProduct = await wcObject.Product.Update(wcProductID, new Product { catalog_visibility = (toggleProduct == "show" ? "visible" : "search") });
+            uint wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            var updateProduct = await wcObject.Product.Update((int)wcProductID, new Product { catalog_visibility = (toggleProduct == "show" ? "visible" : "search") });
 
             return Ok(updateProduct);
         }
@@ -859,8 +859,8 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            var updateProduct = await wcObject.Product.Update(wcProductID, new Product { sku = newSKU });
+            uint wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            var updateProduct = await wcObject.Product.Update((int)wcProductID, new Product { sku = newSKU });
 
             return Ok(updateProduct);
         }
@@ -896,8 +896,8 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            var updateProduct = await wcObject.Product.Update(wcProductID, new Product {
+            uint wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            var updateProduct = await wcObject.Product.Update((int)wcProductID, new Product {
                 meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
                             {
                                 new WooCommerceNET.WooCommerce.v2.ProductMeta()
@@ -942,8 +942,8 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            var updateProduct = await wcObject.Product.Update(wcProductID, new Product
+            uint wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            var updateProduct = await wcObject.Product.Update((int)wcProductID, new Product
             {
                 regular_price = Convert.ToDecimal(product.regularPrice)
             });
@@ -1020,8 +1020,8 @@ namespace ANNwpsync.Controllers
             // Trộn tags WP và tags hệ thống gốc sau đó lọc duplicate
             var allTags = tags.Concat(oldTags).Distinct().ToList();
 
-            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            var updateProduct = await wcObject.Product.Update(wcProductID, new Product
+            uint wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            var updateProduct = await wcObject.Product.Update((int)wcProductID, new Product
             {
                 tags = allTags
             });
@@ -1064,7 +1064,7 @@ namespace ANNwpsync.Controllers
             try
             {
                 #region Lấy product ID trên web
-                int wcProductID = getWCProduct.Select(x => x.id).FirstOrDefault().Value;
+                uint wcProductID = getWCProduct.Select(x => x.id).FirstOrDefault().Value;
                 #endregion
 
                 #region Thực hiện xóa tất cả biến thể cũ nếu là sản phẩm biến thể
@@ -1074,14 +1074,14 @@ namespace ANNwpsync.Controllers
                     var wcProductVariationList = await wcObject.Product.Variations.GetAll(wcProductID);
                     foreach (var productVariation in wcProductVariationList)
                     {
-                        await wcObject.Product.Variations.Delete(productVariation.id.Value, wcProductID, true);
+                        await wcObject.Product.Variations.Delete((int)productVariation.id.Value, (int)wcProductID, true);
                     }
                 }
                 #endregion
 
                 #region Update sản phẩm
                 Product updateProduct = await _handleWCProduct(product, wcObject, checkHeader.priceType, checkHeader.domain);
-                Product wcProduct = await wcObject.Product.Update(wcProductID, updateProduct);
+                Product wcProduct = await wcObject.Product.Update((int)wcProductID, updateProduct);
                 #endregion
 
                 #region Update hình trong nội dung sản phẩm
@@ -1091,7 +1091,7 @@ namespace ANNwpsync.Controllers
                 {
                     productContent += String.Format("<p><img src='/wp-content/uploads/{0}' alt='{1}' /></p>", System.IO.Path.GetFileName(item.src), product.name);
                 }
-                var upProduct = await wcObject.Product.Update(wcProduct.id.Value, new Product { description = productContent });
+                var upProduct = await wcObject.Product.Update((int)wcProduct.id.Value, new Product { description = productContent });
                 #endregion
 
                 #region Thực hiện post các biến thể nếu là sản phẩm biến thể
@@ -1147,8 +1147,8 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            int wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            var updateProduct = await wcObject.Product.Delete(wcProductID, true);
+            uint wcProductID = wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            var updateProduct = await wcObject.Product.Delete((int)wcProductID, true);
 
             return Ok(updateProduct);
         }
