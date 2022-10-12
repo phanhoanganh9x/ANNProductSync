@@ -755,7 +755,7 @@ namespace ANNwpsync.Controllers
             }
 
             // Materials
-            string[] noMaterials = { "my-pham", "kem-face", "kem-body", "serum", "tam-trang", "sua-tam", "sua-rua-mat", "dau-goi-dau", "son-moi", "kem-chong-nang", "my-pham-tong-hop", "dung-dich-ve-sinh", "mat-na-duong-da", "nuoc-hoa", "nuoc-hoa-charme", "nuoc-hoa-noi-dia-trung", "nuoc-hoa-vung-kin", "nuoc-hoa-mini", "nuoc-hoa-full-size", "bao-li-xi-tet", "thuc-pham-chuc-nang", "tong-hop", "nuoc-tay-trang" };
+            string[] noMaterials = { "my-pham", "kem-face", "kem-body", "serum", "tam-trang", "sua-tam", "sua-rua-mat", "dau-goi-dau", "son-moi", "kem-chong-nang", "my-pham-tong-hop", "dung-dich-ve-sinh", "mat-na-duong-da", "nuoc-hoa", "nuoc-hoa-charme", "nuoc-hoa-lua", "nuoc-hoa-noi-dia-trung", "nuoc-hoa-vung-kin", "nuoc-hoa-mini", "nuoc-hoa-full-size", "bao-li-xi-tet", "thuc-pham-chuc-nang", "tong-hop", "nuoc-tay-trang", "kem-danh-rang", "kem-tan-mo" };
             if (!noMaterials.Contains(product.categorySlug))
             {
                 productContent += "Chất liệu " + product.materials + ".<br><br>";
@@ -816,6 +816,11 @@ namespace ANNwpsync.Controllers
                                 {
                                     key = "_bestprice",
                                     value = product.BestPrice
+                                },
+                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                {
+                                    key = "_sku_ann",
+                                    value = product.sku
                                 }
                             }
             };
@@ -1279,7 +1284,7 @@ namespace ANNwpsync.Controllers
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("product/updatePrice/{productID:int}/{addSKU}")]
+        [Route("product/updatePrice/{productID:int}")]
         public async Task<IActionResult> updatePrice(int productID, string addSKU)
         {
             #region Kiểm tra điều kiện header request
@@ -1295,37 +1300,52 @@ namespace ANNwpsync.Controllers
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên hệ thống gốc" });
             #endregion
             #region Thực hiện get sản phẩm trên web bằng SKU
-            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku + (addSKU != "null" ? addSKU : "") } });
-            if (wcProduct.Count == 0)
+            var meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>() {
+                            new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                            {
+                                key = "_sku_ann",
+                                value = product.sku
+                            }
+            };
+            Dictionary<string, string> pDic = new Dictionary<string, string>();
+            pDic.Add("sku", product.sku);
+
+            var wcProduct = await wcObject.Product.GetAll(pDic);
+
+            var query = wcProduct.Where(x => x.meta_data == meta_data).ToList();
+            if (query.Count == 0)
             {
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
             }
             #endregion
-
-            int wcProductID = (int)wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            var updateProduct = await wcObject.Product.Update(wcProductID, new Product {
-                regular_price = Convert.ToDecimal(product.regularPrice),
-                meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
-                            {
-                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
-                                {
-                                    key = "_retail_price",
-                                    value = product.retailPrice
-                                },
-                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
-                                {
-                                    key = "_price10",
-                                    value = product.Price10
-                                },
-                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
-                                {
-                                    key = "_bestprice",
-                                    value = product.BestPrice
-                                }
-                            }
-            });
-
-            return Ok(updateProduct);
+            //foreach (var item in wcProduct)
+            //{
+            //    int wcProductID = (int)item.id.Value;
+            //    await wcObject.Product.Update(wcProductID, new Product
+            //    {
+            //        regular_price = Convert.ToDecimal(product.regularPrice),
+            //        meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
+            //                {
+            //                    new WooCommerceNET.WooCommerce.v2.ProductMeta()
+            //                    {
+            //                        key = "_retail_price",
+            //                        value = product.retailPrice
+            //                    },
+            //                    new WooCommerceNET.WooCommerce.v2.ProductMeta()
+            //                    {
+            //                        key = "_price10",
+            //                        value = product.Price10
+            //                    },
+            //                    new WooCommerceNET.WooCommerce.v2.ProductMeta()
+            //                    {
+            //                        key = "_bestprice",
+            //                        value = product.BestPrice
+            //                    }
+            //                }
+            //    });
+            //    //return Ok(updateProduct);
+            //}
+            return Ok(new ResponseModel() { success = true, message = "OK" });
         }
         #endregion
         #region Update hidden wholesale price
