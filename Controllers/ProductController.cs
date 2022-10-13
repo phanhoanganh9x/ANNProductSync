@@ -473,7 +473,7 @@ namespace ANNwpsync.Controllers
         /// <param name="priceType"></param>
         /// <param name="domain"></param>
         /// <returns></returns>
-        private async Task<Product> _handleWCProduct(ProductModel product, WCObject wcObject, string priceType, string domain, bool cleanName = false, bool featuredImage = false, bool changeSKU = false, string catalogVisibility = "visible")
+        private async Task<Product> _handleWCProduct(ProductModel product, WCObject wcObject, string priceType, string domain, bool cleanName = false, bool featuredImage = false, string catalogVisibility = "visible")
         {
             #region Regular Price
             decimal? regular_price = null;
@@ -725,18 +725,7 @@ namespace ANNwpsync.Controllers
                 if (!String.IsNullOrEmpty(product.CleanName))
                 {
                     productName = product.CleanName;
-
-                    //if (product.sku.All(char.IsNumber))
-                    //{
-                    //    productName = product.sku + " - " + product.CleanName;
-                    //}
                 }
-            }
-
-            string productSKU = product.sku;
-            if (changeSKU == true)
-            {
-                productSKU = product.sku + "ANN";
             }
             #endregion
 
@@ -788,7 +777,7 @@ namespace ANNwpsync.Controllers
             return new Product()
             {
                 name = productName,
-                sku = productSKU,
+                sku = product.sku,
                 regular_price = regular_price,
                 type = product.type,
                 description = HttpUtility.HtmlDecode(productContent),
@@ -801,28 +790,23 @@ namespace ANNwpsync.Controllers
                 stock_quantity = product.stock_quantity,
                 catalog_visibility = catalogVisibility,
                 meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
-                            {
-                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
-                                {
-                                    key = "_retail_price",
-                                    value = product.retailPrice
-                                },
-                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
-                                {
-                                    key = "_price10",
-                                    value = product.Price10
-                                },
-                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
-                                {
-                                    key = "_bestprice",
-                                    value = product.BestPrice
-                                },
-                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
-                                {
-                                    key = "_sku_ann",
-                                    value = product.sku
-                                }
-                            }
+                    {
+                        new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                        {
+                            key = "_retail_price",
+                            value = product.retailPrice
+                        },
+                        new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                        {
+                            key = "_price10",
+                            value = product.Price10
+                        },
+                        new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                        {
+                            key = "_bestprice",
+                            value = product.BestPrice
+                        }
+                    }
             };
             }
         #endregion
@@ -870,7 +854,6 @@ namespace ANNwpsync.Controllers
                 //Add new product
                 bool featuredImage = false;
                 bool CleanName = false;
-                bool changeSKU = false;
                 string catalogVisibility = "visible";
                 if (checkHeader.domain == "nguonmypham.com")
                 {
@@ -878,7 +861,7 @@ namespace ANNwpsync.Controllers
                     CleanName = true;
                 }
 
-                Product newProduct = await _handleWCProduct(product, wcObject, checkHeader.priceType, checkHeader.domain, CleanName, featuredImage, changeSKU, catalogVisibility);
+                Product newProduct = await _handleWCProduct(product, wcObject, checkHeader.priceType, checkHeader.domain, CleanName, featuredImage, catalogVisibility);
                 
                 Product wcProduct = await wcObject.Product.Add(newProduct);
 
@@ -1071,7 +1054,6 @@ namespace ANNwpsync.Controllers
                 //Add new product
                 bool featuredImage = true;
                 bool CleanName = true;
-                bool changeSKU = true;
                 string catalogVisibility = "hidden";
                 if (checkHeader.domain == "nguonmypham.com")
                 {
@@ -1079,7 +1061,7 @@ namespace ANNwpsync.Controllers
                     CleanName = false;
                 }
 
-                Product newProduct = await _handleWCProduct(product, wcObject, checkHeader.priceType, checkHeader.domain, CleanName, featuredImage, changeSKU, catalogVisibility);
+                Product newProduct = await _handleWCProduct(product, wcObject, checkHeader.priceType, checkHeader.domain, CleanName, featuredImage, catalogVisibility);
                 Product wcProduct = await wcObject.Product.Add(newProduct);
 
                 #region Update hình trong nội dung sản phẩm
@@ -1200,11 +1182,26 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            int wcProductID = (int)wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            DateTime newTime = DateTime.Now.AddHours(-8);
-            var updateProduct = await wcObject.Product.Update(wcProductID, new Product { date_created_gmt = newTime, date_modified_gmt = newTime });
+            var wcProductUpdate = new List<Product>();
 
-            return Ok(updateProduct);
+            foreach (var item in wcProduct)
+            {
+                int wcProductID = (int)item.id.Value;
+                DateTime newTime = DateTime.Now.AddHours(-8);
+
+                try
+                {
+                    var data = await wcObject.Product.Update(wcProductID, new Product { date_created_gmt = newTime, date_modified_gmt = newTime });
+                    
+                    wcProductUpdate.Add(data);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+                    continue;
+                }
+            }
+            return Ok(wcProductUpdate);
         }
         #endregion
         #region Toggle Product
@@ -1239,10 +1236,25 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            int wcProductID = (int)wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            var updateProduct = await wcObject.Product.Update(wcProductID, new Product { catalog_visibility = (toggleProduct == "show" ? "visible" : "search") });
+            var wcProductUpdate = new List<Product>();
 
-            return Ok(updateProduct);
+            foreach (var item in wcProduct)
+            {
+                int wcProductID = (int)item.id.Value;
+
+                try
+                {
+                    var data = await wcObject.Product.Update(wcProductID, new Product { catalog_visibility = (toggleProduct == "show" ? "visible" : "search") });
+
+                    wcProductUpdate.Add(data);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+                    continue;
+                }
+            }
+            return Ok(wcProductUpdate);
         }
         #endregion
         #region Update SKU
@@ -1271,10 +1283,25 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            int wcProductID = (int)wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            var updateProduct = await wcObject.Product.Update(wcProductID, new Product { sku = newSKU });
+            var wcProductUpdate = new List<Product>();
 
-            return Ok(updateProduct);
+            foreach (var item in wcProduct)
+            {
+                int wcProductID = (int)item.id.Value;
+
+                try
+                {
+                    var data = await wcObject.Product.Update(wcProductID, new Product { sku = newSKU });
+
+                    wcProductUpdate.Add(data);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+                    continue;
+                }
+            }
+            return Ok(wcProductUpdate);
         }
         #endregion
         #region Update Price
@@ -1285,7 +1312,7 @@ namespace ANNwpsync.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("product/updatePrice/{productID:int}")]
-        public async Task<IActionResult> updatePrice(int productID, string addSKU)
+        public async Task<IActionResult> updatePrice(int productID)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
@@ -1300,52 +1327,54 @@ namespace ANNwpsync.Controllers
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên hệ thống gốc" });
             #endregion
             #region Thực hiện get sản phẩm trên web bằng SKU
-            var meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>() {
-                            new WooCommerceNET.WooCommerce.v2.ProductMeta()
-                            {
-                                key = "_sku_ann",
-                                value = product.sku
-                            }
-            };
-            Dictionary<string, string> pDic = new Dictionary<string, string>();
-            pDic.Add("sku", product.sku);
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
 
-            var wcProduct = await wcObject.Product.GetAll(pDic);
-
-            var query = wcProduct.Where(x => x.meta_data == meta_data).ToList();
-            if (query.Count == 0)
+            if (wcProduct.Count == 0)
             {
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
             }
             #endregion
-            //foreach (var item in wcProduct)
-            //{
-            //    int wcProductID = (int)item.id.Value;
-            //    await wcObject.Product.Update(wcProductID, new Product
-            //    {
-            //        regular_price = Convert.ToDecimal(product.regularPrice),
-            //        meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
-            //                {
-            //                    new WooCommerceNET.WooCommerce.v2.ProductMeta()
-            //                    {
-            //                        key = "_retail_price",
-            //                        value = product.retailPrice
-            //                    },
-            //                    new WooCommerceNET.WooCommerce.v2.ProductMeta()
-            //                    {
-            //                        key = "_price10",
-            //                        value = product.Price10
-            //                    },
-            //                    new WooCommerceNET.WooCommerce.v2.ProductMeta()
-            //                    {
-            //                        key = "_bestprice",
-            //                        value = product.BestPrice
-            //                    }
-            //                }
-            //    });
-            //    //return Ok(updateProduct);
-            //}
-            return Ok(new ResponseModel() { success = true, message = "OK" });
+
+            var wcProductUpdate = new List<Product>();
+
+            foreach (var item in wcProduct)
+            {
+                int wcProductID = (int)item.id.Value;
+
+                try
+                {
+                    var data = await wcObject.Product.Update(wcProductID, new Product
+                    {
+                        regular_price = Convert.ToDecimal(product.regularPrice),
+                        meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
+                            {
+                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                {
+                                    key = "_retail_price",
+                                    value = product.retailPrice
+                                },
+                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                {
+                                    key = "_price10",
+                                    value = product.Price10
+                                },
+                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                {
+                                    key = "_bestprice",
+                                    value = product.BestPrice
+                                }
+                            }
+                    });
+
+                    wcProductUpdate.Add(data);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+                    continue;
+                }
+            }
+            return Ok(wcProductUpdate);
         }
         #endregion
         #region Update hidden wholesale price
@@ -1355,8 +1384,8 @@ namespace ANNwpsync.Controllers
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("product/toggleWholesalePrice/{productID:int}/{toggleProduct}/{addSKU}")]
-        public async Task<IActionResult> toggleWholesalePrice(int productID, string toggleProduct, string addSKU)
+        [Route("product/toggleWholesalePrice/{productID:int}/{toggleProduct}")]
+        public async Task<IActionResult> toggleWholesalePrice(int productID, string toggleProduct)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
@@ -1372,7 +1401,7 @@ namespace ANNwpsync.Controllers
             #endregion
 
             #region Thực hiện get sản phẩm trên web bằng SKU cũ
-            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku + (addSKU != "null" ? addSKU : "") } });
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
             if (wcProduct.Count == 0)
             {
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
@@ -1395,32 +1424,47 @@ namespace ANNwpsync.Controllers
             }
             shortDescription += product.short_description;
 
-            int wcProductID = (int)wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            var updateProduct = await wcObject.Product.Update(wcProductID, new Product
-            {
-                short_description = HttpUtility.HtmlDecode(shortDescription),
-                regular_price = Convert.ToDecimal(regularPrice),
-                meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
-                            {
-                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
-                                {
-                                    key = "_retail_price",
-                                    value = retailPrice
-                                },
-                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
-                                {
-                                    key = "_price10",
-                                    value = price10
-                                },
-                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
-                                {
-                                    key = "_bestprice",
-                                    value = bestPrice
-                                }
-                            }
-            });
+            var wcProductUpdate = new List<Product>();
 
-            return Ok(updateProduct);
+            foreach (var item in wcProduct)
+            {
+                int wcProductID = (int)item.id.Value;
+
+                try
+                {
+                    var data = await wcObject.Product.Update(wcProductID, new Product
+                    {
+                        short_description = HttpUtility.HtmlDecode(shortDescription),
+                        regular_price = Convert.ToDecimal(regularPrice),
+                        meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
+                                {
+                                    new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                    {
+                                        key = "_retail_price",
+                                        value = retailPrice
+                                    },
+                                    new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                    {
+                                        key = "_price10",
+                                        value = price10
+                                    },
+                                    new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                    {
+                                        key = "_bestprice",
+                                        value = bestPrice
+                                    }
+                                }
+                    });
+
+                    wcProductUpdate.Add(data);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+                    continue;
+                }
+            }
+            return Ok(wcProductUpdate);
         }
         #endregion
         #region Update hidden price type
@@ -1430,8 +1474,8 @@ namespace ANNwpsync.Controllers
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("product/togglePrice/{productID:int}/{toggleProduct}/{priceType}/{addSKU}")]
-        public async Task<IActionResult> togglePrice(int productID, string toggleProduct, string priceType, string addSKU)
+        [Route("product/togglePrice/{productID:int}/{toggleProduct}/{priceType}")]
+        public async Task<IActionResult> togglePrice(int productID, string toggleProduct, string priceType)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
@@ -1447,7 +1491,7 @@ namespace ANNwpsync.Controllers
             #endregion
 
             #region Thực hiện get sản phẩm trên web bằng SKU cũ
-            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku + (addSKU != "null" ? addSKU : "") } });
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
             if (wcProduct.Count == 0)
             {
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
@@ -1459,68 +1503,80 @@ namespace ANNwpsync.Controllers
             double price10 = product.Price10;
             double bestPrice = product.BestPrice;
 
-            int wcProductID = (int)wcProduct.Select(x => x.id).FirstOrDefault().Value;
+            var wcProductUpdate = new List<Product>();
 
-            if (priceType == "WholesalePrice")
+            foreach (var item in wcProduct)
             {
-                var updateProduct = await wcObject.Product.Update(wcProductID, new Product
-                {
-                    regular_price = Convert.ToDecimal(toggleProduct == "hide" ? retailPrice : regularPrice)
-                });
-                return Ok(updateProduct);
-            }
+                int wcProductID = (int)item.id.Value;
 
-            if (priceType == "RetailPrice")
-            {
-                var updateProduct = await wcObject.Product.Update(wcProductID, new Product
+                try
                 {
-                    meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
-                            {
-                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                    var data = new Product();
+
+                    if (priceType == "WholesalePrice")
+                    {
+                        data = await wcObject.Product.Update(wcProductID, new Product
+                        {
+                            regular_price = Convert.ToDecimal(toggleProduct == "hide" ? retailPrice : regularPrice)
+                        });
+                    }
+
+                    if (priceType == "RetailPrice")
+                    {
+                        data = await wcObject.Product.Update(wcProductID, new Product
+                        {
+                            meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
                                 {
-                                    key = "_retail_price",
-                                    value = Convert.ToDecimal(toggleProduct == "hide" ? 0 : retailPrice)
+                                    new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                    {
+                                        key = "_retail_price",
+                                        value = Convert.ToDecimal(toggleProduct == "hide" ? 0 : retailPrice)
+                                    }
                                 }
-                            }
-                });
-                return Ok(updateProduct);
-            }
+                        });
+                    }
 
-            if (priceType == "Price10")
-            {
-                var updateProduct = await wcObject.Product.Update(wcProductID, new Product
-                {
-                    meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
-                            {
-                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                    if (priceType == "Price10")
+                    {
+                        data = await wcObject.Product.Update(wcProductID, new Product
+                        {
+                            meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
                                 {
-                                    key = "_price10",
-                                    value = Convert.ToDecimal(toggleProduct == "hide" ? 0 : price10)
+                                    new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                    {
+                                        key = "_price10",
+                                        value = Convert.ToDecimal(toggleProduct == "hide" ? 0 : price10)
+                                    }
                                 }
-                            }
-                });
-                return Ok(updateProduct);
-            }
+                        });
+                    }
 
-            if (priceType == "BestPrice")
-            {
-                var updateProduct = await wcObject.Product.Update(wcProductID, new Product
-                {
-                    regular_price = Convert.ToDecimal(regularPrice),
-                    meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
-                            {
-                                new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                    if (priceType == "BestPrice")
+                    {
+                        data = await wcObject.Product.Update(wcProductID, new Product
+                        {
+                            regular_price = Convert.ToDecimal(regularPrice),
+                            meta_data = new List<WooCommerceNET.WooCommerce.v2.ProductMeta>()
                                 {
-                                    key = "_bestprice",
-                                    value = Convert.ToDecimal(toggleProduct == "hide" ? 0 : bestPrice)
+                                    new WooCommerceNET.WooCommerce.v2.ProductMeta()
+                                    {
+                                        key = "_bestprice",
+                                        value = Convert.ToDecimal(toggleProduct == "hide" ? 0 : bestPrice)
+                                    }
                                 }
-                            }
-                });
-                return Ok(updateProduct);
-            }
+                        });
+                    }
 
-            return null;
-            
+                    wcProductUpdate.Add(data);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+                    continue;
+                }
+            }
+            return Ok(wcProductUpdate);
+
         }
         #endregion
         #region Update Product Category
@@ -1530,8 +1586,8 @@ namespace ANNwpsync.Controllers
         /// <param name="productID"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("product/updateProductCategory/{productID:int}/{addSKU}")]
-        public async Task<IActionResult> updateProductCategory(int productID, string addSKU)
+        [Route("product/updateProductCategory/{productID:int}")]
+        public async Task<IActionResult> updateProductCategory(int productID)
         {
             #region Kiểm tra điều kiện header request
             var checkHeader = _checkHeaderRequest(Request.Headers);
@@ -1547,7 +1603,7 @@ namespace ANNwpsync.Controllers
             #endregion
 
             #region Thực hiện get sản phẩm trên web bằng SKU cũ
-            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku + (addSKU != "null" ? addSKU : "") } });
+            var wcProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
             if (wcProduct.Count == 0)
             {
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
@@ -1604,14 +1660,29 @@ namespace ANNwpsync.Controllers
             }
             #endregion
 
-            int wcProductID = (int)wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            var updateProduct = await wcObject.Product.Update(wcProductID, new Product
-            {
-                tags = allTags,
-                categories = categories
-            });
+            var wcProductUpdate = new List<Product>();
 
-            return Ok(updateProduct);
+            foreach (var item in wcProduct)
+            {
+                int wcProductID = (int)item.id.Value;
+
+                try
+                {
+                    var data = await wcObject.Product.Update(wcProductID, new Product
+                    {
+                        tags = allTags,
+                        categories = categories
+                    });
+
+                    wcProductUpdate.Add(data);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+                    continue;
+                }
+            }
+            return Ok(wcProductUpdate);
         }
         #endregion
         #region Update Product Tag
@@ -1683,13 +1754,28 @@ namespace ANNwpsync.Controllers
             // Trộn tags WP và tags hệ thống gốc sau đó lọc duplicate
             var allTags = tags.Concat(oldTags).Distinct().ToList();
 
-            int wcProductID = (int)wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            var updateProduct = await wcObject.Product.Update(wcProductID, new Product
-            {
-                tags = allTags
-            });
+            var wcProductUpdate = new List<Product>();
 
-            return Ok(updateProduct);
+            foreach (var item in wcProduct)
+            {
+                int wcProductID = (int)item.id.Value;
+
+                try
+                {
+                    var data = await wcObject.Product.Update(wcProductID, new Product
+                    {
+                        tags = allTags
+                    });
+
+                    wcProductUpdate.Add(data);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+                    continue;
+                }
+            }
+            return Ok(wcProductUpdate);
         }
         #endregion
         #region Renew product
@@ -1716,7 +1802,7 @@ namespace ANNwpsync.Controllers
             #endregion
 
             #region Thực hiện get sản phẩm trên web
-            var getWCProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku } });
+            var getWCProduct = await wcObject.Product.GetAll(new Dictionary<string, string>() { { "sku", product.sku }, { "catalog_visibility", "visible" } });
             if (getWCProduct.Count == 0)
             {
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
@@ -1818,18 +1904,30 @@ namespace ANNwpsync.Controllers
                 var wcProductCategoryID = wcProductCategory.Select(x => x.id).FirstOrDefault();
                 categories.Add(new ProductCategoryLine() { id = wcProductCategoryID });
             }
-            else
-            {
-
-            }
             #endregion
 
-            int wcProductID = (int)wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            var updateProduct = await wcObject.Product.Update(wcProductID, new Product { 
-                categories = categories 
-            });
+            var wcProductUpdate = new List<Product>();
 
-            return Ok(updateProduct);
+            foreach (var item in wcProduct)
+            {
+                int wcProductID = (int)item.id.Value;
+
+                try
+                {
+                    var data = await wcObject.Product.Update(wcProductID, new Product
+                    {
+                        categories = categories
+                    });
+
+                    wcProductUpdate.Add(data);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+                    continue;
+                }
+            }
+            return Ok(wcProductUpdate);
         }
         #endregion
         #region Delete Product
@@ -1862,11 +1960,13 @@ namespace ANNwpsync.Controllers
                 return BadRequest(new ResponseModel() { success = false, message = "Không tìm thấy sản phẩm trên web" });
             }
             #endregion
+            foreach (var item in wcProduct)
+            {
+                int wcProductID = (int)item.id.Value;
+                await wcObject.Product.Delete(wcProductID, true);
+            }
 
-            int wcProductID = (int)wcProduct.Select(x => x.id).FirstOrDefault().Value;
-            var updateProduct = await wcObject.Product.Delete(wcProductID, true);
-
-            return Ok(updateProduct);
+            return Ok(new ResponseModel() { success = true, message = "OK" });
         }
         #endregion
         #endregion
